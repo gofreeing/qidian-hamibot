@@ -475,13 +475,12 @@ function getPrize() {
         }
     }
 }
-
-// qdao()
-// lookvd()
-// looksp()
-
-//签到
 start()
+// qdao()签到
+// lookvd()做福利任务
+// looksp()领碎片
+//下面三个方法需要hamibot配置模板才能运行
+//签到
 if (ham.checkbox_01) {
     qdao()
 }
