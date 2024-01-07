@@ -4,7 +4,42 @@ console.setTitle("调试");
 console.setPosition(5, device.height / 3)
 console.setSize(device.width / 6, device.width / 2)
 var ham = hamibot.env
+var bounds
+var centerX
+var centerY
+var right
+var sp = 0
 // setScreenMetrics(device.width, device.height);
+//提取数字
+function jstime(datatime) {
+    var textObj = datatime
+    // 存储初始文本内容
+    var initText = textObj.text();
+    log(initText)
+    //获取时间
+    var match = initText.match(/\d+/g);
+    if (match) {
+        var numbers = [];
+        for (var i = 0; i < match.length; i++) {
+            numbers.push(parseInt(match[i]));
+        }
+        return numbers[0]
+    } else {
+        return null
+    }
+}
+//提取坐标中心
+function getXy(obj) {
+    var button = obj;
+    var bounds = button.bounds();
+    var centerX = (bounds.left + bounds.right) / 2;
+    var centerY = (bounds.top + bounds.bottom) / 2;
+
+    return {
+        centerX: centerX,
+        centerY: centerY
+    };
+}
 //启动起点
 function start() {
     if (auto.service == null) {
@@ -17,6 +52,10 @@ function start() {
         waitForPackage('com.qidian.QDReader')
         waitForActivity('com.qidian.QDReader.ui.activity.MainGroupActivity')
         id("btnCheckIn").waitFor
+        bounds = className("android.widget.FrameLayout").depth(0).findOne()
+        centerX = getXy(bounds).centerX;
+        centerY = getXy(bounds).centerY;
+        right = bounds.bounds().right
         log("应用已启动")
         sleep(1500)
         back()
@@ -33,21 +72,7 @@ function qdao() {
     sleep(1500)
     var today = new Date();
     var dayOfWeek = today.getDay();
-    if (dayOfWeek === 0) {
-        log("今天是周日");
-        text("周日兑换章节卡").findOne().parent().click()
-        sleep(500)
-        className("android.widget.ListView").depth(17).findOne().children().forEach(child => {
-            var target = child.findOne(className("android.view.View").desc("兑换"));
-            target.click();
-        });
-        sleep(500)
-        className("android.view.View").desc("兑换").clickable(true).depth(16).findOne().click()
-        sleep(500)
-        click(device.width / 2, device.height / 2)
-    } else {
-        log("今天不是周日");
-    }
+
     if (descContains("抽奖").exists()) {
         log("点击抽奖")
         descContains("抽奖").findOne().click()
@@ -70,6 +95,21 @@ function qdao() {
             waitad()
             sleep(1000)
         }
+    }
+    if (dayOfWeek === 0) {
+        log("今天是周日");
+        text("周日兑换章节卡").findOne().parent().click()
+        sleep(500)
+        className("android.widget.ListView").depth(17).findOne().children().forEach(child => {
+            var target = child.findOne(className("android.view.View").desc("兑换"));
+            target.click();
+        });
+        sleep(500)
+        className("android.view.View").desc("兑换").clickable(true).depth(16).findOne().click()
+        // click(centerX, centerY)
+        // sleep(500)
+    } else {
+        log("今天不是周日");
     }
     if (ham.checkbox_03) {
         //勾选福利任务
@@ -94,18 +134,22 @@ function lookvd() {
     log("等待福利中心加载")
     text("限时彩蛋").waitFor()
     log("看视频")
+
     while (true) {
         sleep(500)
         if (textContains("宝箱").exists()) {
             textContains("宝箱").findOne().click()
             waitad()
+
         }
         if (textContains("看视频").exists() && !(textContains("明日").exists())) {
             textContains("看视频").findOne().click()
             waitad()
+
         } else if (desc("看视频").exists()) {
             desc("看视频").findOne().click()
             waitad()
+
         } else {
             break
         }
@@ -144,10 +188,6 @@ function looksp() {
     log('已打开小说')
     waitForActivity("com.qidian.QDReader.ui.activity.QDReaderActivity");
     sleep(2000)
-    var bounds = className("android.widget.FrameLayout").depth(1).findOne();
-    var centerX = getXy(bounds).centerX;
-    var centerY = getXy(bounds).centerY;
-    var right = bounds.bounds().right
     //找红包
     while (true) {
 
@@ -196,6 +236,8 @@ function looksp() {
         //看视频
         waitad()
         //领碎片
+        sleep(500)
+        log('领碎片')
         id("btnRight").findOne().click()
         sleep(700)
         if (id("btnOk").exists()) {
@@ -255,6 +297,8 @@ function buy() {
 
 //等待广告
 function waitad() {
+    sp++
+    log('看视频' + sp + '个')
     log('看广告')
     sleep(500)
     textContains("观看").waitFor()
@@ -269,9 +313,11 @@ function waitad() {
     var x2 = video_quit.left;
     var y1 = video_quit.top;
     var y2 = video_quit.bottom;
-    // var quitad//退出控件
-    // quitad = textContains("观看").findOne().parent().children()
-    // quitad = quitad[0]
+    // 退出坐标
+    // var ads = textContains("观看").findOne().parent().children()
+    // bounds = ads[0]
+    // X = getXy(bounds).centerX;
+    // Y = getXy(bounds).centerY;
     //等待时间
     var time = adtime()
     if (time) {
@@ -296,8 +342,7 @@ function waitad() {
                     log('点击退出')
                     // quitad.click()
                     while (true) {
-
-                        click(parseInt((x1 + x2) / 2), parseInt((y1 + y2) / 2))
+                        click(parseInt((x1 + x2) / 2 + 1), parseInt((y1 + y2) / 2))
                         sleep(500)
                         if (textContains("继续观看").exists()) {
                             break
@@ -323,7 +368,7 @@ function waitad() {
 
     while (true) {
         log('点击退出')
-        click(parseInt((x1 + x2) / 2), parseInt((y1 + y2) / 2))
+        click(parseInt((x1 + x2) / 2 + 1), parseInt((y1 + y2) / 2))
         sleep(500)
         if (textContains("继续观看").exists()) {
             time = adtime()
@@ -333,16 +378,7 @@ function waitad() {
         } else {
             break
         }
-    }
-    // quitad.click()
-    // // log(text("muteOn").findOne())
-    // if (textContains("跳过").exists()) {
-    //     textContains("跳过").findOne().click()
-    // } else if(className("android.widget.Image").exists()){
-    //     className("android.widget.Image").findOne().click();
-    // }else{
-    //     className("android.view.View").clickable(true).depth(10).findOne().click()
-    // }
+    }   
     log("广告已关闭")
     sleep(500)
     if (desc("我知道了").exists()) {
@@ -398,13 +434,16 @@ function play() {
                 if (pt) {
 
                     games[gamei - 3].click()
-                    // sleep(500)
-                    waitForActivity('com.qidian.QDReader.ui.activity.QDBrowserActivity')
-                    textContains("今日必玩推荐").waitFor()
-                    textContains("本周热门").waitFor()
+                    log("前往游戏中心")
+                    // sleep(500)com.qidian.QDReader.ui.activity.QDBrowserActivity
+                    // waitForActivity('com.qidian.QDReader.ui.activity.QDBrowserActivity')
+                    // textContains("今日必玩推荐").waitFor()
+                    // textContains("本周热门").waitFor()
+                    sleep(10000)
                     swipe(1, device.height, 1, device.height / 20, 500)
-                    sleep(1000)
+                    sleep(500)
                     textContains("在线玩").findOne().parent().click()
+                    log("进入游戏")
                     log('剩余' + pt + '分钟')
                     sleep(1000 * 60 * (pt + 0.5))
                     back()
@@ -412,8 +451,14 @@ function play() {
                     back()
                     sleep(1500)
                     back()
-                    text("福利中心经验值").waitFor()
-                    click('领取', 0)
+                    if (ham.checkbox_01) {
+                        text("福利中心经验值").waitFor()
+                        click(right, centerY)
+                        sleep(500)
+                        click('领取', 0)
+                    } else {
+                        textContains("福利中心").findOne().parent().click()
+                    }
                     log("等待福利中心加载")
                     text("限时彩蛋").waitFor()
                 } else {
@@ -433,36 +478,6 @@ function playtime() {
     gamei = game.childCount()
     return jstime(games[gamei - 1]) - jstime(games[gamei - 2])
 }
-//提取数字
-function jstime(datatime) {
-    var textObj = datatime
-    // 存储初始文本内容
-    var initText = textObj.text();
-    log(initText)
-    //获取时间
-    var match = initText.match(/\d+/g);
-    if (match) {
-        var numbers = [];
-        for (var i = 0; i < match.length; i++) {
-            numbers.push(parseInt(match[i]));
-        }
-        return numbers[0]
-    } else {
-        return null
-    }
-}
-//提取坐标中心
-function getXy(obj) {
-    var button = obj;
-    var bounds = button.bounds();
-    var centerX = (bounds.left + bounds.right) / 2;
-    var centerY = (bounds.top + bounds.bottom) / 2;
-
-    return {
-        centerX: centerX,
-        centerY: centerY
-    };
-}
 //领取
 function getPrize() {
     var prizePool
@@ -475,12 +490,17 @@ function getPrize() {
         }
     }
 }
-start()
-// qdao()签到
-// lookvd()做福利任务
-// looksp()领碎片
-//下面三个方法需要hamibot配置模板才能运行
+
+// qdao()
+// lookvd()
+// looksp()
+
 //签到
+start()
+//领碎片
+if (ham.checkbox_02) {
+    looksp()
+}
 if (ham.checkbox_01) {
     qdao()
 }
@@ -488,15 +508,13 @@ if (ham.checkbox_01) {
 if (ham.checkbox_03) {
     lookvd()
 }
-//领碎片
-if (ham.checkbox_02) {
-    looksp()
-}
 
-console.hide()
-engines.stopAllAndToast()
+
+
 // listenToBook()
 // play()
+console.hide()
+engines.stopAllAndToast()
 // var screenHeight = device.height;
 
 // var bounds = className("android.widget.FrameLayout").depth(1).findOne();
