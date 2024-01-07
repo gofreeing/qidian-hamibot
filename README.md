@@ -9,4 +9,6 @@
 激励碎片：进入新书页面找红包位置看视频并领取碎片
 以上功能在配置中分三类，按需开启
 有能力的可以下载源码进行优化
+
+
 ![image](https://github.com/gofreeing/qidian-hamibot/assets/56500905/f8965ce8-8ab8-4c8a-8662-b219543149ca)
