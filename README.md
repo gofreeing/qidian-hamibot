@@ -18,4 +18,5 @@
 有能力的可以下载源码进行优化
 
 
-![image](https://github.com/gofreeing/qidian-hamibot/assets/56500905/f8965ce8-8ab8-4c8a-8662-b219543149ca)
+![image](https://github.com/gofreeing/qidian-hamibot/assets/56500905/d0116aee-9813-42c3-88a2-f753e4ecebb7)
+
