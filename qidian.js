@@ -457,8 +457,7 @@ function waitad() {
             log('等待' + num + '秒')
             if (isOne) {
                 log('获取不到时间，重新获取')
-                log('点击退出')
-                // quitad.click()
+                log('点击退出')               
                 while (true) {
                     // clickParentIfClickable(zb[0])
                     // if (cxy) {
