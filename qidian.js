@@ -48,7 +48,7 @@ function getXy(obj) {
 }
 //判断广告时间
 function adtime() {
-    return jstime(textContains("观看").findOne())
+    return jstime(textEndsWith("获得奖励").findOne())
 }
 //返回首页
 function backHome(params) {
@@ -191,21 +191,22 @@ function qdao() {
             log("点击抽奖")
             autoClick_have(text("抽 奖"))
             log("等待转盘结束")
-            text("剩余0次").waitFor()
+            sleep(3000)
         } else if (text("看视频抽奖喜+1").exists()) {
             log("点击看视频抽奖喜+1")
             autoClick_have(text("看视频抽奖喜+1"))
             waitad()
-            if (!textContains("抽").exists()) {
-                log('未退出广告，重新点击退出')
-                clickParentIfClickable(zb[0])
-                if (cxy) {
-                    clickCenter(zb[0])
-                    cxy = false
-                }
-                click(X, Y)
-            }
-            text("剩余1次").waitFor()
+            sleep(1500)
+            // if (!textContains("抽").exists()) {
+            //     log('未退出广告，重新退出')
+            //     back()
+            //     // clickParentIfClickable(className("android.widget.ImageView").clickable(true).findOne())
+            //     // if (cxy) {
+            //     //     clickCenter(className("android.widget.ImageView").clickable(true).findOne())
+            //     //     cxy = false
+            //     // }
+            //     // click(X, Y)
+            // }
         }
     }
     if (dayOfWeek === 0) {
@@ -277,15 +278,16 @@ function looksp() {
         autoClick_have(text("马上抢"))
         //看视频
         waitad()
-        if (!text("红包").exists()) {
-            log('未退出广告，重新点击退出')
-            clickParentIfClickable(zb[0])
-            if (cxy) {
-                clickCenter(zb[0])
-                cxy = false
-            }
-            click(X, Y)
-        }
+        // if (!text("红包").exists()) {
+        //     log('未退出广告，重新退出')
+        //     back()
+        //     // clickParentIfClickable(className("android.widget.ImageView").clickable(true).findOne())
+        //     // if (cxy) {
+        //     //     clickCenter(className("android.widget.ImageView").clickable(true).findOne())
+        //     //     cxy = false
+        //     // }
+        //     // click(X, Y)
+        // }
         //领碎片
         log('领碎片')
         autoClick_have(text("立即领取"))
@@ -325,40 +327,43 @@ function lookvd() {
         if (textContains("宝箱").exists()) {
             autoClick_have(textContains("宝箱"))
             waitad()
-            if (!text("限时彩蛋").exists()) {
-                log('未退出广告，重新点击退出')
-                clickParentIfClickable(zb[0])
-                if (cxy) {
-                    clickCenter(zb[0])
-                    cxy = false
-                }
-                click(X, Y)
-            }
+            // if (!text("限时彩蛋").exists()) {
+            //     log('未退出广告，重新退出')
+            //     back()
+            //     // clickParentIfClickable(className("android.widget.ImageView").clickable(true).findOne())
+            //     // if (cxy) {
+            //     //     clickCenter(className("android.widget.ImageView").clickable(true).findOne())
+            //     //     cxy = false
+            //     // }
+            //     // click(X, Y)
+            // }
         }
         if (textContains("看视频").exists() && !(textContains("明日").exists())) {
             autoClick_have(textContains("看视频"))
             waitad()
-            if (!text("限时彩蛋").exists()) {
-                log('未退出广告，重新点击退出')
-                clickParentIfClickable(zb[0])
-                if (cxy) {
-                    clickCenter(zb[0])
-                    cxy = false
-                }
-                click(X, Y)
-            }
+            // if (!text("限时彩蛋").exists()) {
+            //     log('未退出广告，重新退出')
+            //     back()
+            //     // clickParentIfClickable(className("android.widget.ImageView").clickable(true).findOne())
+            //     // if (cxy) {
+            //     //     clickCenter(className("android.widget.ImageView").clickable(true).findOne())
+            //     //     cxy = false
+            //     // }
+            //     // click(X, Y)
+            // }
         } else if (desc("看视频").exists()) {
             autoClick_have(desc("看视频"))
             waitad()
-            if (!text("限时彩蛋").exists()) {
-                log('未退出广告，重新点击退出')
-                clickParentIfClickable(zb[0])
-                if (cxy) {
-                    clickCenter(zb[0])
-                    cxy = false
-                }
-                click(X, Y)
-            }
+            // if (!text("限时彩蛋").exists()) {
+            //     log('未退出广告，重新退出')
+            //     back()
+            //     // clickParentIfClickable(className("android.widget.ImageView").clickable(true).findOne())
+            //     // if (cxy) {
+            //     //     clickCenter(className("android.widget.ImageView").clickable(true).findOne())
+            //     //     cxy = false
+            //     // }
+            //     // click(X, Y)
+            // }
         } else {
             log('视频已看完')
             break
@@ -386,12 +391,12 @@ function waitad() {
     log('看广告')
     // sleep(500)
     textEndsWith("获得奖励").waitFor()
-    while (true) {
-        zb = textEndsWith("获得奖励").findOne().parent().children()
-        if (zb.length > 3) {
-            break
-        }
-    }
+    // while (true) {
+    // zb = textEndsWith("获得奖励").findOne().parent().children()
+    //     if (zb.length > 3) {
+    //         break
+    //     }
+    // }
     var video_quit = textEndsWith("获得奖励").findOne().bounds()
     var x1 = 0;
     var x2 = video_quit.left;
@@ -401,75 +406,120 @@ function waitad() {
     Y = parseInt((y1 + y2) / 2)
     //等待时间
     var time = adtime()
+    //获取不到时间
+    var num = 0
+    var isOne = true
+    var justone
+    var ifback
     if (time) {
         //成功获取时间
-        log('等待' + time + '秒')
-        sleep(1000 * (time + 1))
-    } else {
-        //获取不到时间
-        var num = 0
-        var isOne = true
-        while (true) {
-            sleep(500)
+        justone = true
+        isOne = false
+    }
+    // var again
+    while (true) {
+        if (!textEndsWith("获得奖励").exists() && !textContains('观看').exists()) {
+            if (ifback) {
+                log('返回退出')
+                sleep(300)
+                back()
+            }
+            break
+        } else if (justone) {
+            log('等待' + time + '秒')
+            justone = false
+            sleep(1000 * (time + 1))
             if (!textEndsWith("获得奖励").exists()) {
-                log("视频已结束")
+                log('返回退出')
+                sleep(300)
+                back()
                 break
-            } else {
-                num++
-                sleep(1000)
-                log('等待' + num + '秒')
-                if (isOne) {
-                    log('获取不到时间，重新获取')
-                    log('点击退出')
-                    // quitad.click()
-                    while (true) {
-                        clickParentIfClickable(zb[0])
-                        if (cxy) {
-                            clickCenter(zb[0])
-                            cxy = false
-                        }
-                        click(X, Y)
-                        sleep(500)
-                        if (textContains("继续观看").exists()) {
-                            break
-                        }
-                    }
-                    time = adtime()
-                    if (time) {
-                        log('成功获取')
-                        autoClick_have(textContains("继续观看"))
-                        log('等待' + time + '秒')
-                        sleep(1000 * (time + 1))
+            }
+            click(X, Y)
+            click(X, Y)
+            sleep(500)
+            if (textContains("继续观看").exists()) {
+                autoClick_have(textContains("继续观看"))
+                ifback = true
+            } else if (textEndsWith("获得奖励").exists()) {
+                ifback = true
+                log('点击退出失败')
+            }
+            else {
+
+                log('点击退出')
+            }
+
+        }
+        else {
+            num++
+            sleep(1000)
+            log('等待' + num + '秒')
+            if (isOne) {
+                log('获取不到时间，重新获取')
+                log('点击退出')
+                // quitad.click()
+                while (true) {
+                    // clickParentIfClickable(zb[0])
+                    // if (cxy) {
+                    //     clickCenter(zb[0])
+                    //     cxy = false
+                    // }
+                    click(X, Y)
+                    sleep(500)
+                    if (textContains("继续观看").exists()) {
                         break
-                    } else {
-                        log('等待视频结束')
-                        autoClick_have(textContains("继续观看"))
-                        isOne = false
                     }
+                }
+                time = adtime()
+                if (time) {
+                    log('成功获取')
+                    autoClick_have(textContains("继续观看"))
+                    log('等待' + time + '秒')
+                    isOne = false
+                    sleep(1000 * (time + 1))
+                    if (!textEndsWith("获得奖励").exists()) {
+                        log('返回退出')
+                        sleep(300)
+                        back()
+                        break
+                    }
+                    click(X, Y)
+                    click(X, Y)
+                    sleep(500)
+                    if (textContains("继续观看").exists()) {
+                        autoClick_have(textContains("继续观看"))
+                        ifback = true
+                    } else if (textEndsWith("获得奖励").exists()) {
+                        ifback = true
+                        log('点击退出失败')
+                    }
+                    else {
+                        log('点击退出')
+                    }
+                    // again = time / 5
+                } else {
+                    log('等待视频结束')
+                    autoClick_have(textContains("继续观看"))
+                    isOne = false
+                    ifback = true
                 }
             }
         }
     }
     //点击退出
-    while (true) {
-        log('点击退出')
-        clickParentIfClickable(zb[0])
-        if (cxy) {
-            clickCenter(zb[0])
-            cxy = false
-        }
-        click(X, Y)
-        sleep(700)
-        if (textContains("继续观看").exists()) {
-            time = adtime()
-            autoClick_have(textContains("继续观看"))
-            log('等待' + time + '秒')
-            sleep(1000 * (time + 1))
-        }
-        else {
-            break
-        }
-    }
+    // if (!textEndsWith("获得奖励").exists()) {
+    //     log('返回退出')
+    //     back()
+    // } else {
+    //     log('点击退出')
+    //     clickParentIfClickable(zb[0])
+    //     if (cxy) {
+    //         clickCenter(zb[0])
+    //         cxy = false
+    //     }
+    //     click(X, Y)
+    // }
     log("关闭广告")
     sleep(500)
     if (textContains("我知道了").exists()) {
