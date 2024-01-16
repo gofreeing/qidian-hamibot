@@ -274,6 +274,17 @@ function looksp() {
         autoClick_have(text("马上抢"))
         //看视频
         waitad()
+        do {
+            if (!text("立即领取").exists() && text("1个").exists()) {
+                log('点击红包')
+                autoClick_have(text("红包"))
+                log('打开红包')
+                autoClick_have(text("马上抢"))
+                waitad()
+            } else {
+                break
+            }
+        } while (true);
         // sleep(700)
         // if (!text("立即领取").exists()) {
         //     back()
@@ -374,12 +385,12 @@ function waitad() {
     sp++
     log('看视频' + sp + '个')
     log('看广告')
-    // sleep(500)
+    // sleep(500)text = muteClose
     textEndsWith("获得奖励").waitFor()
-    text("muteOn").waitFor()
+    // text("muteOn").waitFor()
     while (true) {
         zb = textEndsWith("获得奖励").findOne().parent().children()
-        if (zb.length > 3) {
+        if (zb.length > 3 && (text("muteOn").exists() || text("muteClose").exists() || id("d").exists())) {
             break
         }
     }
@@ -409,7 +420,7 @@ function waitad() {
     }
     // var again
     while (true) {
-        if (!text("muteOn").exists()) {
+        if (!(text("muteOn").exists() || text("muteClose").exists() || id("d").exists())) {
             if (ifback) {
                 back()
                 sleep(500)
@@ -431,7 +442,7 @@ function waitad() {
                     sleep(1000)
                     log('等待1秒')
                 }
-            } while (text("muteOn").exists());
+            } while (text("muteOn").exists() || text("muteClose").exists() || id("d").exists());
 
             // autoClick_have(text("cross"))
             // sleep(500)
@@ -500,7 +511,7 @@ function waitad() {
                             sleep(1000)
                             log('等待1秒')
                         }
-                    } while (text("muteOn").exists());
+                    } while (text("muteOn").exists() || text("muteClose").exists() || id("d").exists());
                     // again = time / 5
                 } else {
                     log('等待视频结束')
