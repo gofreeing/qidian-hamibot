@@ -158,12 +158,17 @@ function poll(params) {
 function qdao() {
     log("签到")
     autoClick_have(textStartsWith('签到'))
-    //等待加载
-    log("等待抽奖")
+    //等待加载   
     waitForActivity('com.qidian.QDReader.ui.activity.QDBrowserActivity')
     text("阅读积分").waitFor()
     var today = new Date();
     var dayOfWeek = today.getDay();
+    autoClick_have(text("连签礼包 "))
+    text("连签说明").waitFor()
+    do {       
+        clickParentIfClickable(text("未领取").findOnce())
+    } while (text("未领取").exists());
+    back() 
     log("抽奖详情")
     while (true) {
         if (textContains("明日").exists() || textContains("明天").exists() || descContains("明日").exists() || descContains("明天").exists()) {
