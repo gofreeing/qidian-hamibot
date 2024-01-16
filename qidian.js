@@ -165,10 +165,11 @@ function qdao() {
     var dayOfWeek = today.getDay();
     autoClick_have(text("连签礼包 "))
     text("连签说明").waitFor()
-    do {       
+    do {
         clickParentIfClickable(text("未领取").findOnce())
     } while (text("未领取").exists());
-    back() 
+    back()
+    sleep(1500)
     log("抽奖详情")
     while (true) {
         if (textContains("明日").exists() || textContains("明天").exists() || descContains("明日").exists() || descContains("明天").exists()) {
@@ -395,7 +396,7 @@ function waitad() {
     // text("muteOn").waitFor()
     while (true) {
         zb = textEndsWith("获得奖励").findOne().parent().children()
-        if (zb.length > 3 && (text("muteOn").exists() || text("muteClose").exists() || id("d").exists())) {
+        if (zb.length > 3) {
             break
         }
     }
@@ -414,27 +415,97 @@ function waitad() {
     var time = adtime()
     //获取不到时间
     var num = 0
-    var isOne = true
-    var justone
-    var ifback
-    var iscontinue
-    if (time) {
-        //成功获取时间
-        justone = true
-        isOne = false
-    }
+    // var isOne = true
+    // var justone
+    // var ifback
+    // var iscontinue
+    // if (time) {
+    //     //成功获取时间
+    //     justone = true
+    //     isOne = false
+    // }
     // var again
-    while (true) {
-        if (!(text("muteOn").exists() || text("muteClose").exists() || id("d").exists())) {
-            if (ifback) {
-                back()
-                sleep(500)
+    // while (true) {
+    // if (!(text("muteOn").exists() || text("muteClose").exists() || textEndsWith("获得奖励").exists() || textStartsWith("观看").exists())) {
+    //     if (ifback) {
+    //         back()
+    //         sleep(500)
+    //     }
+    //     break
+    // } else
+    if (time) {
+        log('等待' + time + '秒')
+        // justone = false
+        sleep(1000 * time)
+        do {
+            if (nocross) {
+                click(X, Y)
+            } else {
+                clickCenter(zb[0])
             }
-            break
-        } else if (justone) {
+            sleep(500)
+            if (text("继续观看").exists()) {
+                autoClick_have(text("继续观看"))
+                sleep(1000)
+                log('等待1秒')
+            }
+        } while (zb[0].parent() != null);
+
+        // autoClick_have(text("cross"))
+        // sleep(500)
+        // if (textContains("继续观看").exists()) {
+        //     autoClick_have(textContains("继续观看"))
+        //     sleep(1000 * (time / 6))
+        //     if (nocross) {
+        //         click(X, Y)
+        //     } else {
+        //         clickCenter(zb[0])
+        //     }
+        //     if (!textEndsWith("获得奖励").exists()) {
+        //         iscontinue = true
+        //         continue
+        //     }
+        // }
+    }
+    else {
+        // num++
+        // sleep(1000)
+        // log('等待' + num + '秒')
+        // if (isOne) {
+        log('获取不到时间，重新获取')
+        log('点击退出')
+        while (true) {
+            // clickParentIfClickable(zb[0])
+            // if (cxy) {
+            //     clickCenter(zb[0])
+            //     cxy = false
+            // }
+            // click(X, Y)
+            if (nocross) {
+                click(X, Y)
+            } else {
+                clickCenter(zb[0])
+            }
+            sleep(500)
+            if (text("继续观看").exists()) {
+                break
+            }
+        }
+        time = adtime()
+        if (time) {
+            log('成功获取')
+            autoClick_have(textContains("继续观看"))
             log('等待' + time + '秒')
-            justone = false
+            // isOne = false
             sleep(1000 * time)
+            // if (!textEndsWith("获得奖励").exists()) {
+            //     log('返回退出')
+
+            //     back()
+            //     break
+            // }
+
+            // click(X, Y)
             do {
                 if (nocross) {
                     click(X, Y)
@@ -447,86 +518,24 @@ function waitad() {
                     sleep(1000)
                     log('等待1秒')
                 }
-            } while (text("muteOn").exists() || text("muteClose").exists() || id("d").exists());
-
-            // autoClick_have(text("cross"))
-            // sleep(500)
-            // if (textContains("继续观看").exists()) {
-            //     autoClick_have(textContains("继续观看"))
-            //     sleep(1000 * (time / 6))
-            //     if (nocross) {
-            //         click(X, Y)
-            //     } else {
-            //         clickCenter(zb[0])
-            //     }
-            //     if (!textEndsWith("获得奖励").exists()) {
-            //         iscontinue = true
-            //         continue
-            //     }
-            // }
+            } while (zb[0].parent() != null);
+            // again = time / 5
+        } else {
+            log('等待视频结束')
+            autoClick_have(text("继续观看"))
+            do {
+                num++
+                sleep(1000)
+                log('等待' + num + '秒')
+            } while (text("muteOn").exists() || text("muteClose").exists() || textEndsWith("获得奖励").exists() || textStartsWith("观看").exists());
+            back()
+            sleep(500)
+            // isOne = false
+            // ifback = true
         }
-        else {
-            num++
-            sleep(1000)
-            log('等待' + num + '秒')
-            if (isOne) {
-                log('获取不到时间，重新获取')
-                log('点击退出')
-                while (true) {
-                    // clickParentIfClickable(zb[0])
-                    // if (cxy) {
-                    //     clickCenter(zb[0])
-                    //     cxy = false
-                    // }
-                    // click(X, Y)
-                    if (nocross) {
-                        click(X, Y)
-                    } else {
-                        clickCenter(zb[0])
-                    }
-                    sleep(500)
-                    if (text("继续观看").exists()) {
-                        break
-                    }
-                }
-                time = adtime()
-                if (time) {
-                    log('成功获取')
-                    autoClick_have(textContains("继续观看"))
-                    log('等待' + time + '秒')
-                    isOne = false
-                    sleep(1000 * time)
-                    // if (!textEndsWith("获得奖励").exists()) {
-                    //     log('返回退出')
-
-                    //     back()
-                    //     break
-                    // }
-
-                    // click(X, Y)
-                    do {
-                        if (nocross) {
-                            click(X, Y)
-                        } else {
-                            clickCenter(zb[0])
-                        }
-                        sleep(500)
-                        if (text("继续观看").exists()) {
-                            autoClick_have(text("继续观看"))
-                            sleep(1000)
-                            log('等待1秒')
-                        }
-                    } while (text("muteOn").exists() || text("muteClose").exists() || id("d").exists());
-                    // again = time / 5
-                } else {
-                    log('等待视频结束')
-                    autoClick_have(text("继续观看"))
-                    isOne = false
-                    ifback = true
-                }
-            }
-        }
+        // }
     }
+    // }
     //点击退出
     // if (!textEndsWith("获得奖励").exists()) {
     //     log('返回退出')
