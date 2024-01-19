@@ -41,7 +41,7 @@ function adtime() {
 function backHome(params) {
     while (!(text("书架").exists() && text("精选").exists() && text("听书").exists() && text("发现").exists() && text("我").exists())) {
         back()
-    }
+    }   
     console.log('已到主界面');
 }
 //点击坐标中心
@@ -143,7 +143,6 @@ function poll(params) {
         ca = false;
         return;
     }
-
     autoClick_have(text('投推荐票'));
     var recommendTicket = textMatches(/拥有\d+主站推荐票/).findOne();
     if (jstime(recommendTicket) > 0) {
@@ -169,7 +168,11 @@ function qdao() {
         clickParentIfClickable(text("未领取").findOnce())
     } while (text("未领取").exists());
     back()
-    sleep(1500)
+    back()
+    autoClick_have(textStartsWith('签到'))
+    //等待加载   
+    waitForActivity('com.qidian.QDReader.ui.activity.QDBrowserActivity')
+    text("阅读积分").waitFor()
     log("抽奖详情")
     while (true) {
         if (textContains("明日").exists() || textContains("明天").exists() || descContains("明日").exists() || descContains("明天").exists()) {
@@ -280,22 +283,12 @@ function looksp() {
         autoClick_have(text("马上抢"))
         //看视频
         waitad()
-        do {
-            if (!text("立即领取").exists() && text("1个").exists()) {
-                log('点击红包')
-                autoClick_have(text("红包"))
-                log('打开红包')
-                autoClick_have(text("马上抢"))
-                waitad()
-            } else {
-                break
-            }
-        } while (true);
-        // sleep(700)
-        // if (!text("立即领取").exists()) {
-        //     back()
-        //     sleep(500)
-        // }
+        while (!text("立即领取").exists()) {
+            log('重新看广告')
+            autoClick_have(text("红包"))
+            autoClick_have(text("马上抢"))
+            waitad()
+        }
         //领碎片
         log('领碎片')
         autoClick_have(text("立即领取"))
@@ -324,7 +317,7 @@ function looksp() {
 function lookvd() {
     autoClick_have(text("我"))
     waitForActivity('com.qidian.QDReader.ui.activity.MainGroupActivity')
-    sleep(700)
+    sleep(1000)
     if (text("我知道了").exists()) {
         autoClick_have(text("我知道了"))
     }
@@ -334,42 +327,16 @@ function lookvd() {
     do {
         if (text("看视频开宝箱").exists()) {
             autoClick_have(text("看视频开宝箱"))
-            // log(2)
             waitad()
-            // if (!text("限时彩蛋").exists()) {
-            //     back()
-            //     sleep(500)
-            // }
-            // sleep(300)
-            // if (text("我知道了").exists()) {
-            //     autoClick_have(text("我知道了"))
-            // }
+
         } else if (text("看视频领福利").exists() && !(text("明日再来吧").exists())) {
             autoClick_have(text("看视频领福利"))
-            // clickCenter(text("看视频领福利").findOne())
-            // log(3)
             waitad()
-            // if (!text("限时彩蛋").exists()) {
-            //     back()
-            //     sleep(500)
-            // }
 
-            // if (text("我知道了").exists()) {
-            //     autoClick_have(text("我知道了"))
-            // }
         } else if (desc("看视频").exists()) {
             autoClick_have(desc("看视频"))
-            // clickCenter(desc("看视频").findOne())
-            // log(4)
             waitad()
-            // if (!text("限时彩蛋").exists()) {
-            //     back()
-            //     sleep(500)
-            // }
-            // sleep(300)
-            // if (text("我知道了").exists()) {
-            //     autoClick_have(text("我知道了"))
-            // }
+
         } else {
             break
         }
@@ -391,13 +358,15 @@ function waitad() {
     sp++
     log('看视频' + sp + '个')
     log('看广告')
-    // sleep(500)text = muteClose
     textEndsWith("获得奖励").waitFor()
-    // text("muteOn").waitFor()
     while (true) {
         zb = textEndsWith("获得奖励").findOne().parent().children()
         if (zb.length > 3) {
             break
+        } else if (!textEndsWith("获得奖励").exists()) {
+            autoClick_have(text("cross"))
+            console.log('广告未加载');
+            return
         }
     }
     if (!text("cross").exists()) {
@@ -415,24 +384,6 @@ function waitad() {
     var time = adtime()
     //获取不到时间
     var num = 0
-    // var isOne = true
-    // var justone
-    // var ifback
-    // var iscontinue
-    // if (time) {
-    //     //成功获取时间
-    //     justone = true
-    //     isOne = false
-    // }
-    // var again
-    // while (true) {
-    // if (!(text("muteOn").exists() || text("muteClose").exists() || textEndsWith("获得奖励").exists() || textStartsWith("观看").exists())) {
-    //     if (ifback) {
-    //         back()
-    //         sleep(500)
-    //     }
-    //     break
-    // } else
     if (time) {
         log('等待' + time + '秒')
         // justone = false
@@ -451,36 +402,11 @@ function waitad() {
             }
         } while (zb[0].parent() != null);
 
-        // autoClick_have(text("cross"))
-        // sleep(500)
-        // if (textContains("继续观看").exists()) {
-        //     autoClick_have(textContains("继续观看"))
-        //     sleep(1000 * (time / 6))
-        //     if (nocross) {
-        //         click(X, Y)
-        //     } else {
-        //         clickCenter(zb[0])
-        //     }
-        //     if (!textEndsWith("获得奖励").exists()) {
-        //         iscontinue = true
-        //         continue
-        //     }
-        // }
     }
     else {
-        // num++
-        // sleep(1000)
-        // log('等待' + num + '秒')
-        // if (isOne) {
         log('获取不到时间，重新获取')
         log('点击退出')
         while (true) {
-            // clickParentIfClickable(zb[0])
-            // if (cxy) {
-            //     clickCenter(zb[0])
-            //     cxy = false
-            // }
-            // click(X, Y)
             if (nocross) {
                 click(X, Y)
             } else {
@@ -496,16 +422,7 @@ function waitad() {
             log('成功获取')
             autoClick_have(textContains("继续观看"))
             log('等待' + time + '秒')
-            // isOne = false
             sleep(1000 * time)
-            // if (!textEndsWith("获得奖励").exists()) {
-            //     log('返回退出')
-
-            //     back()
-            //     break
-            // }
-
-            // click(X, Y)
             do {
                 if (nocross) {
                     click(X, Y)
@@ -519,7 +436,6 @@ function waitad() {
                     log('等待1秒')
                 }
             } while (zb[0].parent() != null);
-            // again = time / 5
         } else {
             log('等待视频结束')
             autoClick_have(text("继续观看"))
@@ -528,32 +444,15 @@ function waitad() {
                 sleep(1000)
                 log('等待' + num + '秒')
             } while (text("muteOn").exists() || text("muteClose").exists() || textEndsWith("获得奖励").exists() || textStartsWith("观看").exists());
-            back()
-            sleep(500)
-            // isOne = false
-            // ifback = true
+            // back()
+            // sleep(500)
+            autoClick_have(text("cross"))
         }
-        // }
     }
-    // }
-    //点击退出
-    // if (!textEndsWith("获得奖励").exists()) {
-    //     log('返回退出')
-    //     back()
-    // } else {
-    //     log('点击退出')
-    //     clickParentIfClickable(zb[0])
-    //     if (cxy) {
-    //         clickCenter(zb[0])
-    //         cxy = false
-    //     }
-    //     click(X, Y)
-    // }
     log("广告结束")
-    // sleep(300)
-    if (text("我知道了").exists()) {
-        autoClick_have(text("我知道了"))
-    }
+    // if (text("我知道了").exists()) {
+    //     autoClick_have(text("我知道了"))
+    // }
 }
 //兑换
 function buy() {
@@ -607,9 +506,6 @@ function listenToBook() {
             text("听原创小说").waitFor()
             var xy = getXy(id("playIv").findOne())
             click(xy.centerX, xy.centerY)
-            // id("flIvContent").waitFor()
-            // id("pagContent").waitFor()
-            // waitForActivity('com.qidian.QDReader.ui.activity.AudioPlayActivity')
             sleep(1000 * 10)
             back()
             sleep(500)
@@ -745,6 +641,5 @@ if (ham.checkbox_02) {
 if (ham.checkbox_03) {
     lookvd()
 }
-console.log('运行结束');
 console.hide()
 engines.stopAllAndToast()
