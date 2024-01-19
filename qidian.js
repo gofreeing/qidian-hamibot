@@ -15,7 +15,15 @@ var cxy = false
 var ca = false
 // 退出坐标对象
 var zb
+var news = ''
 //工具模块
+//通知
+// function observeNews() {
+//     events.observeToast();
+//     events.onToast(function (toast) {
+//         news = toast.getText();
+//     });
+// }
 //提取数字
 function jstime(textObj) {
     // 存储初始文本内容
@@ -41,7 +49,7 @@ function adtime() {
 function backHome(params) {
     while (!(text("书架").exists() && text("精选").exists() && text("听书").exists() && text("发现").exists() && text("我").exists())) {
         back()
-    }   
+    }
     console.log('已到主界面');
 }
 //点击坐标中心
@@ -168,11 +176,7 @@ function qdao() {
         clickParentIfClickable(text("未领取").findOnce())
     } while (text("未领取").exists());
     back()
-    back()
-    autoClick_have(textStartsWith('签到'))
-    //等待加载   
-    waitForActivity('com.qidian.QDReader.ui.activity.QDBrowserActivity')
-    text("阅读积分").waitFor()
+    sleep(2000)
     log("抽奖详情")
     while (true) {
         if (textContains("明日").exists() || textContains("明天").exists() || descContains("明日").exists() || descContains("明天").exists()) {
@@ -183,7 +187,7 @@ function qdao() {
             autoClick_have(descContains("抽奖"))
             log("等待抽奖界面出现")
             sleep(1200)
-        } else if (text("抽 奖").exists()) {
+        } else if (text("抽 奖").exists() && !text("剩余0次").exists()) {
             log("点击抽奖")
             autoClick_have(text("抽 奖"))
             log("等待转盘结束")
@@ -193,16 +197,6 @@ function qdao() {
             autoClick_have(text("看视频抽奖喜+1"))
             waitad()
             sleep(1200)
-            // if (!textContains("抽").exists()) {
-            //     log('未退出广告，重新退出')
-            //     back()
-            //     // clickParentIfClickable(className("android.widget.ImageView").clickable(true).findOne())
-            //     // if (cxy) {
-            //     //     clickCenter(className("android.widget.ImageView").clickable(true).findOne())
-            //     //     cxy = false
-            //     // }
-            //     // click(X, Y)
-            // }
         }
     }
     if (dayOfWeek === 0) {
@@ -284,6 +278,10 @@ function looksp() {
         //看视频
         waitad()
         while (!text("立即领取").exists()) {
+            if (text("此图片未加标签。打开右上角的“更多选项”菜单即可获取图片说明。").exists()) {
+                back()
+                break
+            }
             log('重新看广告')
             autoClick_have(text("红包"))
             autoClick_have(text("马上抢"))
@@ -324,23 +322,35 @@ function lookvd() {
     autoClick_have(textContains("福利中心"))
     log("等待福利中心加载")
     text("限时彩蛋").waitFor()
-    do {
-        if (text("看视频开宝箱").exists()) {
-            autoClick_have(text("看视频开宝箱"))
-            waitad()
+    // do {
+    //     if (text("看视频开宝箱").exists()) {
+    //         autoClick_have(text("看视频开宝箱"))
+    //         waitad()
 
-        } else if (text("看视频领福利").exists() && !(text("明日再来吧").exists())) {
-            autoClick_have(text("看视频领福利"))
-            waitad()
+    //     } else if (text("看视频领福利").exists() && !(text("明日再来吧").exists())) {
+    //         autoClick_have(text("看视频领福利"))
+    //         waitad()
 
-        } else if (desc("看视频").exists()) {
-            autoClick_have(desc("看视频"))
-            waitad()
+    //     } else if (desc("看视频").exists()) {
+    //         autoClick_have(desc("看视频"))
+    //         waitad()
 
-        } else {
-            break
-        }
-    } while (true)
+    //     } else {
+    //         break
+    //     }
+    // } while (true)
+    if (text("看视频开宝箱").exists()) {
+        autoClick_have(text("看视频开宝箱"))
+        waitad()
+    }
+    while (text("看视频领福利").exists() && !(text("明日再来吧").exists())) {
+        autoClick_have(text("看视频领福利"))
+        waitad()
+    }
+    while (desc("看视频").exists()) {
+        autoClick_have(desc("看视频"))
+        waitad()
+    }
     log('视频已看完')
     log("听书")
     listenToBook()
@@ -364,7 +374,8 @@ function waitad() {
         if (zb.length > 3) {
             break
         } else if (!textEndsWith("获得奖励").exists()) {
-            autoClick_have(text("cross"))
+            back()
+            sleep(500)
             console.log('广告未加载');
             return
         }
@@ -444,9 +455,9 @@ function waitad() {
                 sleep(1000)
                 log('等待' + num + '秒')
             } while (text("muteOn").exists() || text("muteClose").exists() || textEndsWith("获得奖励").exists() || textStartsWith("观看").exists());
-            // back()
-            // sleep(500)
-            autoClick_have(text("cross"))
+            back()
+            sleep(500)
+            // autoClick_have(text("此图片未加标签。打开右上角的“更多选项”菜单即可获取图片说明。"))
         }
     }
     log("广告结束")
