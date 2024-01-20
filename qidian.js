@@ -182,7 +182,8 @@ function qdao() {
         if (textContains("明日").exists() || textContains("明天").exists() || descContains("明日").exists() || descContains("明天").exists()) {
             log("抽奖结束")
             break
-        } else if (descContains("抽奖").exists() && !text("抽 奖").exists() && !text("看视频抽奖喜+1").exists()) {
+        }
+        else if (descContains("抽奖").exists() && !text("抽 奖").exists() && !text("看视频抽奖喜+1").exists()) {
             log("点击抽奖")
             autoClick_have(descContains("抽奖"))
             log("等待抽奖界面出现")
@@ -278,11 +279,11 @@ function looksp() {
         //看视频
         waitad()
         while (!text("立即领取").exists()) {
-            if (text("此图片未加标签。打开右上角的“更多选项”菜单即可获取图片说明。").exists()) {
-                back()
-                break
-            }
-            log('重新看广告')
+            // if (text("此图片未加标签。打开右上角的“更多选项”菜单即可获取图片说明。").exists()) {
+            //     back()
+            //     break
+            // }
+            log('广告被跳过重新看')
             autoClick_have(text("红包"))
             autoClick_have(text("马上抢"))
             waitad()
@@ -342,14 +343,34 @@ function lookvd() {
     if (text("看视频开宝箱").exists()) {
         autoClick_have(text("看视频开宝箱"))
         waitad()
+        // if (text("此图片未加标签。打开右上角的“更多选项”菜单即可获取图片说明。").exists()) {
+        //     back()
+        //     sleep(500)
+        // }
     }
     while (text("看视频领福利").exists() && !(text("明日再来吧").exists())) {
-        autoClick_have(text("看视频领福利"))
+        do {
+            autoClick_have(text("看视频领福利"))
+        } while (!textEndsWith("获得奖励").exists());
+        // autoClick_have(text("看视频领福利"))
         waitad()
-    }
+        clickParentIfClickable(text("我知道了").findOnce())
+        // if (text("此图片未加标签。打开右上角的“更多选项”菜单即可获取图片说明。").exists()) {
+        //     back()
+        //     sleep(500)
+        // }
+    }   
     while (desc("看视频").exists()) {
-        autoClick_have(desc("看视频"))
+        do {
+            autoClick_have(desc("看视频"))
+        } while (!textEndsWith("获得奖励").exists());
+        // autoClick_have(desc("看视频"))
         waitad()
+        clickParentIfClickable(text("我知道了").findOnce())
+        // if (text("此图片未加标签。打开右上角的“更多选项”菜单即可获取图片说明。").exists()) {
+        //     back()
+        //     sleep(500)
+        // }
     }
     log('视频已看完')
     log("听书")
@@ -368,7 +389,7 @@ function waitad() {
     sp++
     log('看视频' + sp + '个')
     log('看广告')
-    textEndsWith("获得奖励").waitFor()
+    // textEndsWith("获得奖励").waitFor()
     while (true) {
         zb = textEndsWith("获得奖励").findOne().parent().children()
         if (zb.length > 3) {
@@ -412,7 +433,10 @@ function waitad() {
                 log('等待1秒')
             }
         } while (zb[0].parent() != null);
-
+        if (text("此图片未加标签。打开右上角的“更多选项”菜单即可获取图片说明。").exists()) {
+            back()
+            sleep(500)
+        }
     }
     else {
         log('获取不到时间，重新获取')
@@ -447,6 +471,10 @@ function waitad() {
                     log('等待1秒')
                 }
             } while (zb[0].parent() != null);
+            if (text("此图片未加标签。打开右上角的“更多选项”菜单即可获取图片说明。").exists()) {
+                back()
+                sleep(500)
+            }
         } else {
             log('等待视频结束')
             autoClick_have(text("继续观看"))
