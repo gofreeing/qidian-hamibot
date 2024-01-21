@@ -278,11 +278,8 @@ function looksp() {
         autoClick_have(text("马上抢"))
         //看视频
         waitad()
+        sleep(500)
         while (!text("立即领取").exists()) {
-            // if (text("此图片未加标签。打开右上角的“更多选项”菜单即可获取图片说明。").exists()) {
-            //     back()
-            //     break
-            // }
             log('广告被跳过重新看')
             autoClick_have(text("红包"))
             autoClick_have(text("马上抢"))
@@ -323,54 +320,23 @@ function lookvd() {
     autoClick_have(textContains("福利中心"))
     log("等待福利中心加载")
     text("限时彩蛋").waitFor()
-    // do {
-    //     if (text("看视频开宝箱").exists()) {
-    //         autoClick_have(text("看视频开宝箱"))
-    //         waitad()
-
-    //     } else if (text("看视频领福利").exists() && !(text("明日再来吧").exists())) {
-    //         autoClick_have(text("看视频领福利"))
-    //         waitad()
-
-    //     } else if (desc("看视频").exists()) {
-    //         autoClick_have(desc("看视频"))
-    //         waitad()
-
-    //     } else {
-    //         break
-    //     }
-    // } while (true)
+   
     if (text("看视频开宝箱").exists()) {
         autoClick_have(text("看视频开宝箱"))
         waitad()
-        // if (text("此图片未加标签。打开右上角的“更多选项”菜单即可获取图片说明。").exists()) {
-        //     back()
-        //     sleep(500)
-        // }
+        clickParentIfClickable(text("我知道了").findOnce())
     }
     while (text("看视频领福利").exists() && !(text("明日再来吧").exists())) {
-        do {
-            autoClick_have(text("看视频领福利"))
-        } while (!textEndsWith("获得奖励").exists());
-        // autoClick_have(text("看视频领福利"))
+  
+        autoClick_have(text("看视频领福利"))
         waitad()
         clickParentIfClickable(text("我知道了").findOnce())
-        // if (text("此图片未加标签。打开右上角的“更多选项”菜单即可获取图片说明。").exists()) {
-        //     back()
-        //     sleep(500)
-        // }
+
     }   
     while (desc("看视频").exists()) {
-        do {
-            autoClick_have(desc("看视频"))
-        } while (!textEndsWith("获得奖励").exists());
-        // autoClick_have(desc("看视频"))
+        autoClick_have(desc("看视频"))
         waitad()
         clickParentIfClickable(text("我知道了").findOnce())
-        // if (text("此图片未加标签。打开右上角的“更多选项”菜单即可获取图片说明。").exists()) {
-        //     back()
-        //     sleep(500)
-        // }
     }
     log('视频已看完')
     log("听书")
@@ -433,7 +399,7 @@ function waitad() {
                 log('等待1秒')
             }
         } while (zb[0].parent() != null);
-        if (text("此图片未加标签。打开右上角的“更多选项”菜单即可获取图片说明。").exists()) {
+        if (text("star").exists()) {
             back()
             sleep(500)
         }
@@ -471,7 +437,7 @@ function waitad() {
                     log('等待1秒')
                 }
             } while (zb[0].parent() != null);
-            if (text("此图片未加标签。打开右上角的“更多选项”菜单即可获取图片说明。").exists()) {
+            if (text("star").exists()) {
                 back()
                 sleep(500)
             }
