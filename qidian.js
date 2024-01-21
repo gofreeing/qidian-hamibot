@@ -278,6 +278,7 @@ function looksp() {
         autoClick_have(text("马上抢"))
         //看视频
         waitad()
+
         sleep(500)
         while (!text("立即领取").exists()) {
             log('广告被跳过重新看')
@@ -285,6 +286,7 @@ function looksp() {
             autoClick_have(text("马上抢"))
             waitad()
         }
+
         //领碎片
         log('领碎片')
         autoClick_have(text("立即领取"))
@@ -320,7 +322,7 @@ function lookvd() {
     autoClick_have(textContains("福利中心"))
     log("等待福利中心加载")
     text("限时彩蛋").waitFor()
-   
+  
     if (text("看视频开宝箱").exists()) {
         autoClick_have(text("看视频开宝箱"))
         waitad()
@@ -355,10 +357,12 @@ function waitad() {
     sp++
     log('看视频' + sp + '个')
     log('看广告')
+
     // textEndsWith("获得奖励").waitFor()
+
     while (true) {
         zb = textEndsWith("获得奖励").findOne().parent().children()
-        if (zb.length > 3) {
+        if (zb.length > 3 && (text("muteOn").exists() || text("muteClose").exists() || id("d").exists())) {
             break
         } else if (!textEndsWith("获得奖励").exists()) {
             back()
@@ -383,6 +387,7 @@ function waitad() {
     //获取不到时间
     var num = 0
     if (time) {
+
         log('等待' + time + '秒')
         // justone = false
         sleep(1000 * time)
@@ -423,6 +428,7 @@ function waitad() {
             log('成功获取')
             autoClick_have(textContains("继续观看"))
             log('等待' + time + '秒')
+
             sleep(1000 * time)
             do {
                 if (nocross) {
@@ -435,6 +441,7 @@ function waitad() {
                     autoClick_have(text("继续观看"))
                     sleep(1000)
                     log('等待1秒')
+
                 }
             } while (zb[0].parent() != null);
             if (text("star").exists()) {
@@ -455,9 +462,8 @@ function waitad() {
         }
     }
     log("广告结束")
-    // if (text("我知道了").exists()) {
-    //     autoClick_have(text("我知道了"))
-    // }
+
+
 }
 //兑换
 function buy() {
