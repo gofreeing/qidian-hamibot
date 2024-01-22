@@ -356,16 +356,9 @@ function waitad() {
     log('看视频' + sp + '个')
     log('看广告')
     // textEndsWith("获得奖励").waitFor()
-    if (wa = textEndsWith("获得奖励").findOne(5000)) {
-        zb = wa.parent().children()
-    } else if (textStartsWith("点击").visibleToUser(true).exists()) {
-        back()
-        sleep(500)
-        console.log('广告未加载');
-        return
-    } else {
-        return
-    }
+
+    zb = textEndsWith("获得奖励").findOne().parent().children()
+
     while (true) {
         if (zb.length > 3) {
             break
