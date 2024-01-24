@@ -631,7 +631,7 @@ function buy() {
     if (convertibleList.length > 0) {
         for (let i = convertibleList.length - 1; i >= 0; i--) {
             clickCenter(convertibleList[i])
-            clickParentIfClickable(text("确认").findOne())
+            clickParentIfClickable(text("确认").findOne(1500))
         }
     }
     console.log('已兑换')
