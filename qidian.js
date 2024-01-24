@@ -13,7 +13,7 @@ var X
 var Y
 var InitialValue = null
 var ca = false
-var clickResults
+// var clickResults
 // var news = ''
 //工具模块
 /*//通知
@@ -79,9 +79,9 @@ function adtime() {
 
 //返回首页
 function backHome(params) {
-    // while (!(text("书架").visibleToUser(true).exists() && text("精选").visibleToUser(true).exists() && text("听书").visibleToUser(true).exists() && text("发现").visibleToUser(true).exists() && text("我").visibleToUser(true).exists())) {
-    //     back()
-    // }
+    /*while (!(text("书架").visibleToUser(true).exists() && text("精选").visibleToUser(true).exists() && text("听书").visibleToUser(true).exists() && text("发现").visibleToUser(true).exists() && text("我").visibleToUser(true).exists())) {
+        back()
+    }*/
     do {
         back()
     } while (!(id("normal").visibleToUser(true).exists()))
@@ -107,20 +107,21 @@ function clickParentIfClickable(widget) {
     }
     if (widget === null) {
         console.log('找不到');
-        return clickResults = false;  // 终止递归的条件：如果 widget 是空值，则结束递归
+        return null;  // 终止递归的条件：如果 widget 是空值，则结束递归
     }
     if (widget.click()) {
         console.log('已点击');
-        return clickResults = true;  // 点击控件
+        return true;  // 点击控件
     }
     var parentWidget = widget.parent();  // 获取控件的父类
     if (parentWidget === null) {
         console.log('不可点击');
         clickCenter(InitialValue)
         InitialValue = null
-        return clickResults = false;
+        return false;
     }
-    clickParentIfClickable(parentWidget);  // 递归调用自身，传入父类控件进行下一次查找和点击
+    return clickParentIfClickable(parentWidget);
+    // 递归调用自身，传入父类控件进行下一次查找和点击
 }
 
 //直到能长按
@@ -160,12 +161,13 @@ function start() {
         waitForPackage('com.qidian.QDReader')
         waitForActivity('com.qidian.QDReader.ui.activity.MainGroupActivity')
         id("btnCheckIn").waitFor()
+        id("imgClose").findOne(1000)
         bounds = className("android.widget.FrameLayout").depth(0).findOne()
         centerX = getXy(bounds).centerX;
         centerY = getXy(bounds).centerY;
         right = bounds.bounds().right
         log("应用已启动")
-        sleep(1500)
+        // sleep(1500)
         back()
     }
 }
@@ -222,7 +224,7 @@ function qdao() {
     waitForActivity('com.qidian.QDReader.ui.activity.QDBrowserActivity')
     text("阅读积分").waitFor()
     log("抽奖详情")
-    while (true) {
+    /*while (true) {
         if (textContains("明日").exists() || textContains("明天").exists() || descContains("明日").exists() || descContains("明天").exists()) {
             log("抽奖结束")
             break
@@ -243,7 +245,42 @@ function qdao() {
             waitad()
             sleep(1200)
         }
+    }*/
+    //抽奖
+    if (desc("点击抽奖+1").exists()) {
+        clickParentIfClickable(desc("点击抽奖+1").findOne())
+        do {
+            let num = textMatches(/剩余\d+次/).findOne();
+            num = jstime(num);
+            for (let i = 0; i < num; i++) {
+                clickParentIfClickable(desc("抽 奖").findOne())
+                textStartsWith("恭喜获得").waitFor()
+            }
+            if (desc("明天再来").exists() || desc("明日再来抽奖").exists()) {
+                break
+            }
+            clickParentIfClickable(desc("看视频抽奖喜+1").findOne())
+            waitad()
+            desc("抽 奖").waitFor()
+        } while (true)
+    } else if (desc("看视频，得抽奖机会").exists()) {
+        clickParentIfClickable(desc("看视频，得抽奖机会").findOne())
+        do {
+            clickParentIfClickable(desc("看视频抽奖喜+1").findOne())
+            waitad()
+            desc("抽 奖").waitFor()
+            let num = textMatches(/剩余\d+次/).findOne();
+            num = jstime(num);
+            for (let i = 0; i < num; i++) {
+                clickParentIfClickable(desc("抽 奖").findOne())
+                textStartsWith("恭喜获得").waitFor()
+            }
+            if (desc("明天再来").exists() || desc("明日再来抽奖").exists()) {
+                break
+            }
+        } while (true)
     }
+    //兑换章节卡
     if (dayOfWeek === 0) {
         log("今天是周日");
         back()
@@ -328,8 +365,8 @@ function looksp() {
             waitad()
             //领碎片
             log('领碎片')
-            clickParentIfClickable(text("立即领取").findOne(3000))
-        } while (!clickResults)
+
+        } while (clickParentIfClickable(text("立即领取").findOne(3000)) == null)
         /*sleep(500)
         if (id("btnOk").exists()) {
             id("btnOk").findOne().click()
@@ -358,20 +395,20 @@ function lookvd() {
     while (text("看视频开宝箱").exists()) {
         clickParentIfClickable(text("看视频开宝箱").findOne())
         waitad()
-        clickParentIfClickable(text("我知道了").findOne(1500))
+        clickParentIfClickable(text("我知道了").findOne(500))
     }
 
     while (text("看视频领福利").exists() && !(text("明日再来吧").exists())) {
 
         clickParentIfClickable(text("看视频领福利").findOne())
         waitad()
-        clickParentIfClickable(text("我知道了").findOne(1500))
+        clickParentIfClickable(text("我知道了").findOne(500))
 
     }
     while (desc("看视频").exists()) {
         clickParentIfClickable(desc("看视频").findOne())
         waitad()
-        clickParentIfClickable(text("我知道了").findOne(1500))
+        clickParentIfClickable(text("我知道了").findOne(500))
     }
     log('视频已看完')
     log("听书")
@@ -391,20 +428,20 @@ function waitad() {
     sp++
     log('看视频' + sp + '个')
     log('看广告')
-// 假设你需要在某个操作开始的时候记录一个时间戳
-    var startTimestamp = new Date().getTime();
-// 在需要的时候获取当前时间的时间戳
-    var endTimestamp
-// 计算时间差，单位为毫秒
-    var timeDiff
-// 将时间差转换为相应单位的时间
-    var seconds
+    /*// 假设你需要在某个操作开始的时候记录一个时间戳
+        var startTimestamp = new Date().getTime();
+    // 在需要的时候获取当前时间的时间戳
+        var endTimestamp
+    // 计算时间差，单位为毫秒
+        var timeDiff
+    // 将时间差转换为相应单位的时间
+        var seconds*/
     // 广告时间对象
     var reward
     // textEndsWith("获得奖励").waitFor()
     // reward = textEndsWith("获得奖励").findOne().parent().children()
 //等待广告时间对象
-    do {
+    /*do {
         reward = textEndsWith("，可获得奖励").findOnce()
         endTimestamp = new Date().getTime();
         timeDiff = endTimestamp - startTimestamp;
@@ -419,8 +456,18 @@ function waitad() {
                 return;
             }
         }
-    } while (reward == null)
-
+    } while (reward == null)*/
+    reward = textEndsWith("，可获得奖励").findOne(9000)
+    if (reward == null) {
+        if (textStartsWith("点击").visibleToUser(true).exists()) {
+            back()
+            sleep(500)
+            console.log('广告未加载');
+            return
+        } else {
+            return;
+        }
+    }
     //获取关闭坐标
     var gb = text("关闭").findOnce()
     var cross = text("cross").findOnce()
@@ -475,16 +522,7 @@ function waitad() {
 
     }
 
-    /*if (reward == null) {
-        if (textStartsWith("点击").visibleToUser(true).exists()) {
-            back()
-            sleep(500)
-            console.log('广告未加载');
-            return
-        } else {
-            return;
-        }
-    }*/
+
     /* reward = reward.parent().children()
      while (true) {
          if (reward.length > 3) {
@@ -640,8 +678,8 @@ function play() {
                 // var repetitions = 4
                 if (pt) {
                     do {
-                        clickParentIfClickable(games[gamei - 3])
-                        if (!clickResults) {
+
+                        if (!clickParentIfClickable(games[gamei - 3])) {
                             back()
                             clickParentIfClickable(text("游戏中心").findOne())
                         }
