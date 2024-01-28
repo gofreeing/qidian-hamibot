@@ -12,7 +12,6 @@ var sp = 0
 var X
 var Y
 var InitialValue = null
-var ca = false
 // var clickResults
 // var news = ''
 //工具模块
@@ -82,9 +81,13 @@ function backHome(params) {
     /*while (!(text("书架").visibleToUser(true).exists() && text("精选").visibleToUser(true).exists() && text("听书").visibleToUser(true).exists() && text("发现").visibleToUser(true).exists() && text("我").visibleToUser(true).exists())) {
         back()
     }*/
+    /*do {
+        back()
+        sleep(550)
+    } while (!(id("normal").visibleToUser(true).exists()))*/
     do {
         back()
-    } while (!(id("normal").visibleToUser(true).exists()))
+    } while (id("normal").findOne(500) == null)
     console.log('已到主界面');
 }
 
@@ -127,26 +130,26 @@ function clickParentIfClickable(widget) {
 }
 
 //直到能长按
-function autolongClick_have(params) {
+/*function autolongClick_have(params) {
     obj = params.findOne()
     longClickParentIfClickable(obj)
-}
+}*/
 
 function longClickParentIfClickable(widget) {
     if (widget === null) {
         console.log('找不到');
-        return;  // 终止递归的条件：如果 widget 是空值，则结束递归
+        return null;  // 终止递归的条件：如果 widget 是空值，则结束递归
     }
     if (widget.longClick()) {
         console.log('已长按');
-        return;  // 点击控件
+        return true;  // 点击控件
     }
     var parentWidget = widget.parent();  // 获取控件的父类
     if (parentWidget === null) {
         console.log('不可长按');
-        return ca = true
+        return false
     }
-    longClickParentIfClickable(parentWidget);  // 递归调用自身，传入父类控件进行下一次查找和点击
+    return longClickParentIfClickable(parentWidget);  // 递归调用自身，传入父类控件进行下一次查找和点击
 }
 
 
@@ -182,18 +185,20 @@ function poll(params) {
         return;
     }
 
-    var bookText = textContains(ham.text_01).findOnce();
+    var bookText = textContains(ham.text_01).findOne(500);
     if (bookText === null) {
         console.log('没找到该书');
         return;
     }
-
-    longClickParentIfClickable(bookText);
-    if (ca) {
+    if (!longClickParentIfClickable(bookText)) {
+        console.log('投票出现问题请重试');
+        return;
+    }
+    /*if (ca) {
         console.log('投票出现问题请重试');
         ca = false;
         return;
-    }
+    }*/
     clickParentIfClickable(text('投推荐票').findOne());
     var recommendTicket = textMatches(/拥有\d+主站推荐票/).findOne();
     if (jstime(recommendTicket) > 0) {
@@ -210,8 +215,8 @@ function qdao() {
     log("签到")
     clickParentIfClickable(textStartsWith('签到').findOne())
     //等待加载   
-    waitForActivity('com.qidian.QDReader.ui.activity.QDBrowserActivity')
-    text("阅读积分").waitFor()
+    // waitForActivity('com.qidian.QDReader.ui.activity.QDBrowserActivity')
+    // text("阅读积分").waitFor()
     var today = new Date();
     var dayOfWeek = today.getDay();
     clickParentIfClickable(text("连签礼包 ").findOne())
@@ -283,7 +288,7 @@ function qdao() {
             do {
                 clickParentIfClickable(desc("看视频抽奖喜+1").findOne())
                 waitad()
-                sleep(750)
+                sleep(850)
             } while (desc("看视频抽奖喜+1").exists())
             desc("抽 奖").waitFor()
         } while (true)
@@ -293,7 +298,7 @@ function qdao() {
             do {
                 clickParentIfClickable(desc("看视频抽奖喜+1").findOne())
                 waitad()
-                sleep(750)
+                sleep(850)
             } while (desc("看视频抽奖喜+1").exists())
             desc("抽 奖").waitFor()
             do {
@@ -419,7 +424,7 @@ function looksp() {
     }
     log('碎片已领完')
     back()
-    clickParentIfClickable(text("取消").findOne())
+    clickParentIfClickable(text("取消").findOne(500))
     backHome()
 
 }
@@ -436,7 +441,21 @@ function lookvd() {
     text("限时彩蛋").waitFor()
 //获取当前活动
     var currentPage = currentActivity();
-    while (text("看视频开宝箱").exists()) {
+    while (clickParentIfClickable(text("看视频开宝箱").findOnce()) != null) {
+        waitad(currentPage)
+        clickParentIfClickable(text("我知道了").findOne(500))
+    }
+
+    while (clickParentIfClickable(text("看视频领福利").findOnce()) != null && !(text("明日再来吧").exists())) {
+        waitad(currentPage)
+        clickParentIfClickable(text("我知道了").findOne(500))
+
+    }
+    while (clickParentIfClickable(desc("看视频").findOnce()) != null) {
+        waitad(currentPage)
+        clickParentIfClickable(text("我知道了").findOne(500))
+    }
+    /*while (text("看视频开宝箱").exists()) {
         clickParentIfClickable(text("看视频开宝箱").findOnce())
         waitad(currentPage)
         clickParentIfClickable(text("我知道了").findOne(500))
@@ -453,7 +472,7 @@ function lookvd() {
         clickParentIfClickable(desc("看视频").findOnce())
         waitad(currentPage)
         clickParentIfClickable(text("我知道了").findOne(500))
-    }
+    }*/
     log('视频已看完')
     log("听书")
     listenToBook()
@@ -540,7 +559,7 @@ function waitad(params) {
         console.log('广告未加载');
         return
     }
-    textMatches(/\d+/).waitFor()
+    // textMatches(/\d+/).waitFor()
     // tree.findOne(textMatches(/\d+/))
     //获取关闭坐标
     var gb = text("关闭").findOnce()
@@ -809,24 +828,43 @@ function listenToBook() {
     var bookV
     var bookVs//集合
     var bookVi//数量
-    bookV = textContains("当日听书").findOne().parent()
-    bookVs = bookV.children()
+    // let listenTime
+    bookV = textContains("当日听书").findOne(500)
+    if (bookV == null) {
+        console.log('没有听书')
+        return
+    }
+    // if (textContains("当日玩游戏").findOnce() == null) {
+    //      listenTime = jstime(bookVs);
+    // }
+    bookV = bookV.parent()
+    if (clickParentIfClickable(bookV.findOne(text('去完成'))) != null) {
+        text("听原创小说").waitFor()
+        clickParentIfClickable(id("playIv").findOne())
+        sleep(1000 * 10)
+        back()
+        clickParentIfClickable(id("btnLeft").findOne(500))
+        back()
+    }
+    /*bookVs = bookV.children()
     bookVi = bookV.childCount()
     if (bookVs[bookVi - 1].child(0)) {
         if (bookVs[bookVi - 1].child(0).text() == '去完成') {
             bookVs[bookVi - 1].click()
             text("听原创小说").waitFor()
-            var xy = getXy(id("playIv").findOne())
-            click(xy.centerX, xy.centerY)
+            // var xy = getXy(id("playIv").findOne())
+            // click(xy.centerX, xy.centerY)
+            clickParentIfClickable(id("playIv").findOne())
             sleep(1000 * 10)
             back()
-            sleep(500)
-            if (id("btnLeft").exists()) {
-                id("btnLeft").findOne().click()
-            }
+            // sleep(500)
+            // if (id("btnLeft").exists()) {
+            //     id("btnLeft").findOne().click()
+            // }
+            clickParentIfClickable(id("btnLeft").findOne(500))
             back()
         }
-    }
+    }*/
 }
 
 //玩游戏
@@ -834,7 +872,12 @@ function play() {
     var game
     var games//集合
     var gamei//数量
-    game = textContains("当日玩游戏").findOne().parent()
+    game = textContains("当日玩游戏").findOne(500)
+    if (game == null) {
+        console.log('没有游戏可玩')
+        return
+    }
+    game = game.parent()
     games = game.children()
     gamei = game.childCount()
     if (games[gamei - 3].child(0)) {
@@ -859,9 +902,9 @@ function play() {
                         clickParentIfClickable(text("在线玩").findOne())
                     } else {
                         clickParentIfClickable(text("排行").findOne())
-                        textContains("新游榜").waitFor()
-                        textContains("热门榜").waitFor()
-                        textContains("畅销榜").waitFor()
+                        text("新游榜").waitFor()
+                        text("热门榜").waitFor()
+                        text("畅销榜").waitFor()
                         clickParentIfClickable(text("在线玩").findOne())
                         // repetitions++
                     }
@@ -905,8 +948,8 @@ function getPrize() {
     var prizePool
     prizePool = text("领奖励").find()
     for (i = 0; i < prizePool.length; i++) {
-        prizePool[i].click()
-
+        // prizePool[i].click()
+        clickParentIfClickable(prizePool[i])
         clickParentIfClickable(text("我知道了").findOne(500))
 
     }
