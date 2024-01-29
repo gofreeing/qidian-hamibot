@@ -469,8 +469,7 @@ function waitad(params) {
         Y = parseInt((y1 + y2) / 2)
         // var nocross = true
     }
-    //获取当前活动
-    var currentPage = currentActivity();
+
     // 获取等待时间
     var time = adtime()
     if (time == null) {
@@ -490,7 +489,8 @@ function waitad(params) {
             time = parseInt(textMatches(/\d+/).findOne().text())
         }
     }
-
+    //获取当前活动
+    var currentPage = currentActivity();
 //等待广告结束
     var num
     log('等待' + time + '秒')
@@ -526,9 +526,11 @@ function buy() {
     var convertibleList = enjoyCard.find(text('兑换'))
     if (convertibleList.length > 0) {
         for (let i = convertibleList.length - 1; i >= 0; i--) {
-            clickCenter(convertibleList[i])
-            clickParentIfClickable(text("确认").findOne(1500))
+            clickParentIfClickable(convertibleList[i])
+            clickParentIfClickable(text("确认").findOne(2000))
+            sleep(500)
         }
+
     }
     console.log('已兑换')
 
@@ -540,7 +542,7 @@ function listenToBook() {
     var bookVs//集合
     var bookVi//数量
     // let listenTime
-    bookV = textContains("当日听书").findOne(500)
+    bookV = textContains("当日听书").findOne(1000)
     if (bookV == null) {
         console.log('没有听书')
         return
@@ -564,7 +566,7 @@ function play() {
     var game
     var games//集合
     var gamei//数量
-    game = textContains("当日玩游戏").findOne(500)
+    game = textContains("当日玩游戏").findOne(1000)
     if (game == null) {
         console.log('没有游戏可玩')
         return
@@ -642,7 +644,7 @@ function getPrize() {
     for (i = 0; i < prizePool.length; i++) {
         // prizePool[i].click()
         clickParentIfClickable(prizePool[i])
-        clickParentIfClickable(text("我知道了").findOne(500))
+        clickParentIfClickable(text("我知道了").findOne(750))
 
     }
 }
