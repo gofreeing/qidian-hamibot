@@ -214,9 +214,6 @@ function poll(params) {
 function qdao() {
     log("签到")
     clickParentIfClickable(textStartsWith('签到').findOne())
-    //等待加载   
-    // waitForActivity('com.qidian.QDReader.ui.activity.QDBrowserActivity')
-    // text("阅读积分").waitFor()
     var today = new Date();
     var dayOfWeek = today.getDay();
     clickParentIfClickable(text("连签礼包 ").findOne())
@@ -225,61 +222,18 @@ function qdao() {
         clickParentIfClickable(text("未领取").findOnce())
     } while (text("未领取").exists());
     back()
-    /*sleep(500)
-    back()
-    textStartsWith('签到').visibleToUser(true).waitFor()
-    clickParentIfClickable(textStartsWith('签到').findOne())*/
     waitForActivity('com.qidian.QDReader.ui.activity.QDBrowserActivity')
     text("阅读积分").waitFor()
     log("抽奖详情")
-    /*while (true) {
-        if (desc("明天再来").exists() || desc("明日再来抽奖").exists()) {
-            log("抽奖结束")
-            break
-        } else if (descContains("抽奖").exists() && !text("抽 奖").exists() && !text("看视频抽奖喜+1").exists()) {
-            log("点击抽奖")
-            clickParentIfClickable(descContains("抽奖").findOne())
-            log("等待抽奖界面出现")
-            sleep(1200)
-        } else if (text("抽 奖").exists() && !text("剩余0次").exists()) {
-            log("点击抽奖")
-            clickParentIfClickable(text("抽 奖").findOne())
-            log("等待转盘结束")
-            sleep(3200)
-
-        } else if (text("看视频抽奖喜+1").exists()) {
-            log("点击看视频抽奖喜+1")
-            clickParentIfClickable(text("看视频抽奖喜+1").findOne())
-            waitad()
-            sleep(1200)
-        }
-    }*/
     //抽奖
     if (desc("点击抽奖+1").exists()) {
         clickParentIfClickable(desc("点击抽奖+1").findOne())
         do {
-            /*let num = textMatches(/剩余\d+次/).findOne();
-            console.log(num)
-            num = jstime(num);
-            console.log(num)
-            for (let i = num - 1; i >= 0; i--) {
-                clickParentIfClickable(desc("抽 奖").findOne())
-                console.log(4)
-                /!*while (desc("抽 奖").exists()){
-                    sleep(500)
-                }*!/
-                textContains("恭喜").findOne(3000)
-                console.log(5)
-            }*/
             do {
                 clickParentIfClickable(desc("抽 奖").findOne())
-                /*while (desc("抽 奖").exists()){
+                while (textMatches(/剩余\d+次/).exists()) {
                     sleep(500)
-                }*/
-                textContains("恭喜").visibleToUser(true).findOne(3000)
-                /*while (textContains("恭喜").visibleToUser(true).exists()) {
-                    sleep(100)
-                }*/
+                }
                 textMatches(/剩余\d+次/).waitFor()
             } while (desc("抽 奖").exists())
             if (desc("明天再来").exists() || desc("明日再来抽奖").exists()) {
@@ -303,25 +257,11 @@ function qdao() {
             desc("抽 奖").waitFor()
             do {
                 clickParentIfClickable(desc("抽 奖").findOne())
-                /*while (desc("抽 奖").exists()){
+                while (textMatches(/剩余\d+次/).exists()) {
                     sleep(500)
-                }*/
-                textContains("恭喜").visibleToUser(true).findOne(3000)
-                /*while (textContains("恭喜").visibleToUser(true).exists()) {
-                    sleep(100)
-                }*/
+                }
                 textMatches(/剩余\d+次/).waitFor()
             } while (desc("抽 奖").exists())
-            /*let num = textMatches(/剩余\d+次/).findOne();
-            num = jstime(num);
-            for (let i = num - 1; i >= 0; i--) {
-                clickParentIfClickable(desc("抽 奖").findOne())
-                textContains("恭喜").findOne(3000)
-            }*/
-            /*for (let i = 0; i < num; i++) {
-                clickParentIfClickable(desc("抽 奖").findOne())
-                textStartsWith("恭喜获得").waitFor()
-            }*/
             if (desc("明天再来").exists() || desc("明日再来抽奖").exists()) {
                 break
             }
@@ -455,24 +395,6 @@ function lookvd() {
         waitad(currentPage)
         clickParentIfClickable(text("我知道了").findOne(500))
     }
-    /*while (text("看视频开宝箱").exists()) {
-        clickParentIfClickable(text("看视频开宝箱").findOnce())
-        waitad(currentPage)
-        clickParentIfClickable(text("我知道了").findOne(500))
-    }
-
-    while (text("看视频领福利").exists() && !(text("明日再来吧").exists())) {
-
-        clickParentIfClickable(text("看视频领福利").findOnce())
-        waitad(currentPage)
-        clickParentIfClickable(text("我知道了").findOne(500))
-
-    }
-    while (desc("看视频").exists()) {
-        clickParentIfClickable(desc("看视频").findOnce())
-        waitad(currentPage)
-        clickParentIfClickable(text("我知道了").findOne(500))
-    }*/
     log('视频已看完')
     log("听书")
     listenToBook()
@@ -491,40 +413,13 @@ function waitad(params) {
     sp++
     log('看视频' + sp + '个')
     log('看广告')
-    // let tree = className("android.widget.FrameLayout").depth(0).findOne();
-    /*// 假设你需要在某个操作开始的时候记录一个时间戳
-        var startTimestamp = new Date().getTime();
-    // 在需要的时候获取当前时间的时间戳
-        var endTimestamp
-    // 计算时间差，单位为毫秒
-        var timeDiff
-    // 将时间差转换为相应单位的时间
-        var seconds*/
     // 广告时间对象
     var reward
-    // textEndsWith("获得奖励").waitFor()
-    // reward = textEndsWith("获得奖励").findOne().parent().children()
     //等待广告出现
     while (className("android.view.View").depth(4).exists()) {
         sleep(500)
     }
 //等待广告时间对象
-    /*do {
-        reward = textEndsWith("，可获得奖励").findOnce()
-        endTimestamp = new Date().getTime();
-        timeDiff = endTimestamp - startTimestamp;
-        seconds = Math.floor(timeDiff / 1000);
-        if (seconds >= 9) {
-            if (textStartsWith("点击").visibleToUser(true).exists() && reward == null) {
-                back()
-                sleep(500)
-                console.log('广告未加载');
-                return
-            } else {
-                return;
-            }
-        }
-    } while (reward == null)*/
     reward = textEndsWith("，可获得奖励").findOne(9000)
     if (reward == null) {
         if (params == currentActivity()) {
@@ -537,18 +432,7 @@ function waitad(params) {
             console.log('广告未加载');
             return
         }
-        /*if (textEndsWith("打开").visibleToUser(true).exists() || textStartsWith("点击").visibleToUser(true).exists()) {
-            back()
-            sleep(500)
-            console.log('广告未加载');
-            return
-        } else {
-            return;
-        }*/
     }
-
-
-    // reward = reward.parent().children()
     //等待广告出现
     while (className("android.view.View").depth(4).exists()) {
         sleep(500)
@@ -559,8 +443,6 @@ function waitad(params) {
         console.log('广告未加载');
         return
     }
-    // textMatches(/\d+/).waitFor()
-    // tree.findOne(textMatches(/\d+/))
     //获取关闭坐标
     var gb = text("关闭").findOnce()
     var cross = text("cross").findOnce()
@@ -575,23 +457,6 @@ function waitad(params) {
         zb = tg
     } /*else if (wz) {
         zb = wz
-    }*/
-    /*let times = 0;
-    while (zb == null && times < 3) {
-        times++
-        gb = text("关闭").findOnce()
-        cross = text("cross").findOnce()
-        tg = text("跳过广告").findOnce()
-        // wz = text("此图片未加标签。打开右上角的“更多选项”菜单即可获取图片说明。").findOnce()
-        if (gb) {
-            zb = gb
-        } else if (cross) {
-            zb = cross
-        } else if (tg) {
-            zb = tg
-        } /!*else if (wz) {
-            zb = wz
-        }*!/
     }*/
     if (zb == null) {
         console.log('获取关闭坐标')
@@ -612,24 +477,11 @@ function waitad(params) {
         log('获取不到时间，重新获取')
         log('点击退出')
         do {
-            /*            if ((textEndsWith("打开").visibleToUser(true).exists() || textStartsWith("点击").visibleToUser(true).exists()) && textEndsWith("，可获得奖励").findOnce() == null) {
-                            back()
-                            sleep(500)
-                            console.log('广告未加载');
-                            return
-                        }*/
             if (zb == null) {
                 click(X, Y)
             } else {
                 clickCenter(zb)
             }
-            // clickCenter(zb)
-            /*if (zb) {
-                clickCenter(zb)
-            }*/
-            /*else {
-                click(X, Y)
-            }*/
             sleep(450)
         } while (!text("继续观看").exists())
         time = adtime()
@@ -639,23 +491,9 @@ function waitad(params) {
         }
     }
 
-
-    /* reward = reward.parent().children()
-     while (true) {
-         if (reward.length > 3) {
-             break
-         } else if (textStartsWith("点击").visibleToUser(true).exists()) {
-             back()
-             sleep(500)
-             console.log('广告未加载');
-             return
-         }
-     }*/
-
 //等待广告结束
     var num
     log('等待' + time + '秒')
-    // justone = false
     sleep(1000 * time)
     num = 0
     do {
@@ -664,20 +502,6 @@ function waitad(params) {
         } else {
             clickCenter(zb)
         }
-        // clickCenter(zb)
-        /*if (zb) {
-            clickCenter(zb)
-        }*/
-        /*else {
-            click(X, Y)
-        }*/
-        /*sleep(450)
-        if (text("继续观看").exists()) {
-            clickParentIfClickable(text("继续观看").findOne())
-            sleep(1000)
-            num++
-            log('等待' + num + '秒')
-        }*/
         if (clickParentIfClickable(text("继续观看").findOne(450))) {
             sleep(1000)
             num++
@@ -689,84 +513,6 @@ function waitad(params) {
         back()
         sleep(500)
     }
-    /*if (textEndsWith("打开").exists() || text("点击下载").exists() || text("点击卡片").exists()) {
-        back()
-        sleep(500)
-    }*/
-    /*if (text("点击打开").exists() || text("点击下载").exists() || text("点击卡片").exists() || text("立即打开").exists()) {
-        back()
-        sleep(500)
-    }*/
-    /*if (text("关闭").exists()) {
-        back()
-        sleep(500)
-    }*/
-
-
-    /*if (time) {
-        log('等待' + time + '秒')
-        // justone = false
-        sleep(1000 * time)
-        num = 0
-        do {
-            if (zb == null) {
-                click(X, Y)
-            } else {
-                clickCenter(zb)
-            }
-            // clickCenter(zb)
-            /!*if (zb) {
-                clickCenter(zb)
-            }*!/
-            /!*else {
-                click(X, Y)
-            }*!/
-            /!*sleep(450)
-            if (text("继续观看").exists()) {
-                clickParentIfClickable(text("继续观看").findOne())
-                sleep(1000)
-                num++
-                log('等待' + num + '秒')
-            }*!/
-            if (clickParentIfClickable(text("继续观看").findOne(450))) {
-                sleep(1000)
-                num++
-                log('等待' + num + '秒')
-            }
-        } while (textEndsWith("，可获得奖励").exists());
-        //判断是否还在广告页面
-        if (currentActivity() == currentPage) {
-            back()
-            sleep(500)
-        }
-        /!*if (textEndsWith("打开").exists() || text("点击下载").exists() || text("点击卡片").exists()) {
-            back()
-            sleep(500)
-        }*!/
-        /!*if (text("点击打开").exists() || text("点击下载").exists() || text("点击卡片").exists() || text("立即打开").exists()) {
-            back()
-            sleep(500)
-        }*!/
-        /!*if (text("关闭").exists()) {
-            back()
-            sleep(500)
-        }*!/
-
-    } else {
-        //获取不到时间
-        log('等待视频结束')
-        // clickParentIfClickable(text("继续观看").findOne())
-        num = 0
-        do {
-            num++
-            sleep(1000)
-            log('等待' + num + '秒')
-        } while (textEndsWith("，可获得奖励").exists() || textStartsWith("观看").exists());
-        back()
-        sleep(500)
-        // clickParentIfClickable(text("此图片未加标签。打开右上角的“更多选项”菜单即可获取图片说明。").findOne())
-    }*/
-
 
     log('广告结束')
 
@@ -774,41 +520,6 @@ function waitad(params) {
 
 //兑换
 function buy() {
-    /*desc('更多好礼').findOne().click()
-    text('畅享卡').waitFor()
-    var one
-    var two
-    var three
-    one = textStartsWith('7天').findOne().parent()
-    two = textStartsWith('3天').findOne().parent()
-    three = textStartsWith('1天').findOne().parent()
-    one = one.child(one.childCount() - 1)
-    two = two.child(two.childCount() - 1)
-    three = three.child(three.childCount() - 1)
-    if (one.click()) {
-        sleep(500)
-        if (textContains("确认").exists()) {
-            className("android.widget.Button").text("确认").findOne().click()
-            log('兑换成功7天')
-        }
-    }
-    sleep(500)
-    if (two.click()) {
-        sleep(500)
-        if (textContains("确认").exists()) {
-            className("android.widget.Button").text("确认").findOne().click()
-            log('兑换成功3天')
-        }
-    }
-    sleep(500)
-    if (three.click()) {
-        sleep(500)
-        if (textContains("确认").exists()) {
-            className("android.widget.Button").text("确认").findOne().click()
-            log('兑换成功1天')
-        }
-    }
-    sleep(1000)*/
     clickParentIfClickable(desc('更多好礼').findOne())
     text('畅享卡').waitFor()
     var enjoyCard = textStartsWith('7天').findOne().parent().parent()
@@ -846,25 +557,6 @@ function listenToBook() {
         clickParentIfClickable(id("btnLeft").findOne(500))
         back()
     }
-    /*bookVs = bookV.children()
-    bookVi = bookV.childCount()
-    if (bookVs[bookVi - 1].child(0)) {
-        if (bookVs[bookVi - 1].child(0).text() == '去完成') {
-            bookVs[bookVi - 1].click()
-            text("听原创小说").waitFor()
-            // var xy = getXy(id("playIv").findOne())
-            // click(xy.centerX, xy.centerY)
-            clickParentIfClickable(id("playIv").findOne())
-            sleep(1000 * 10)
-            back()
-            // sleep(500)
-            // if (id("btnLeft").exists()) {
-            //     id("btnLeft").findOne().click()
-            // }
-            clickParentIfClickable(id("btnLeft").findOne(500))
-            back()
-        }
-    }*/
 }
 
 //玩游戏
