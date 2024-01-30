@@ -204,6 +204,7 @@ function poll(params) {
     if (jstime(recommendTicket) > 0) {
         clickParentIfClickable(text('全部').findOne());
         clickParentIfClickable(textMatches(/投\d+票/).findOne());
+        console.log('已投票');
     } else {
         console.log('没有推荐票');
         back();
@@ -224,14 +225,16 @@ function qdao() {
     back()
     waitForActivity('com.qidian.QDReader.ui.activity.QDBrowserActivity')
     text("阅读积分").waitFor()
+    var currentPage = currentActivity();
     log("抽奖详情")
     //抽奖
     if (desc("点击抽奖+1").exists()) {
         clickParentIfClickable(desc("点击抽奖+1").findOne())
         do {
             do {
+                //点击抽奖
                 clickParentIfClickable(desc("抽 奖").findOne())
-                while (textMatches(/剩余\d+次/).exists()) {
+                while (textMatches(/剩余\d+次/).exists() && !desc("明天再来").exists()) {
                     sleep(500)
                 }
                 textMatches(/剩余\d+次/).waitFor()
@@ -240,8 +243,9 @@ function qdao() {
                 break
             }
             do {
+//看视频
                 clickParentIfClickable(desc("看视频抽奖喜+1").findOne())
-                waitad()
+                waitad(currentPage)
                 sleep(850)
             } while (desc("看视频抽奖喜+1").exists())
             desc("抽 奖").waitFor()
@@ -250,14 +254,15 @@ function qdao() {
         clickParentIfClickable(desc("看视频，得抽奖机会").findOne())
         do {
             do {
+
                 clickParentIfClickable(desc("看视频抽奖喜+1").findOne())
-                waitad()
+                waitad(currentPage)
                 sleep(850)
             } while (desc("看视频抽奖喜+1").exists())
             desc("抽 奖").waitFor()
             do {
                 clickParentIfClickable(desc("抽 奖").findOne())
-                while (textMatches(/剩余\d+次/).exists()) {
+                while (textMatches(/剩余\d+次/).exists() && !desc("明天再来").exists()) {
                     sleep(500)
                 }
                 textMatches(/剩余\d+次/).waitFor()
@@ -312,6 +317,7 @@ function looksp() {
     waitForActivity("com.qidian.QDReader.ui.activity.QDReaderActivity");
     // sleep(2000)
     // var action
+    var currentPage
     //找红包
     while (true) {
         while (true) {
@@ -341,6 +347,7 @@ function looksp() {
         }
         // var is
         // clickParentIfClickable(text("立即领取").findOne())
+        currentPage = currentActivity();
         do {
 
             log('点击红包')
@@ -350,7 +357,7 @@ function looksp() {
             // text("马上抢").waitFor()
             clickParentIfClickable(text("马上抢").findOne())
             //看视频
-            waitad()
+            waitad(currentPage)
             //领碎片
             log('领碎片')
 
@@ -479,37 +486,51 @@ function waitad(params) {
             if (zb == null) {
                 click(X, Y)
             } else {
-                clickCenter(zb)
+                clickParentIfClickable(zb)
             }
             sleep(450)
         } while (!text("继续观看").exists())
         time = adtime()
         clickParentIfClickable(text("继续观看").findOne())
         if (time == null) {
-            time = parseInt(textMatches(/\d+/).findOne().text())
+            time = textMatches(/\d+/).findOnce()
+            if (time) {
+                time = parseInt(time.text())
+            }
         }
     }
-    //获取当前活动
-    var currentPage = currentActivity();
+
 //等待广告结束
     var num
-    log('等待' + time + '秒')
-    sleep(1000 * time)
-    num = 0
-    do {
-        if (zb == null) {
-            click(X, Y)
-        } else {
-            clickCenter(zb)
-        }
-        if (clickParentIfClickable(text("继续观看").findOne(450))) {
-            sleep(1000)
+    if (time) {
+        log('等待' + time + '秒')
+        sleep(1000 * time)
+        num = 0
+        do {
+            if (zb == null) {
+                click(X, Y)
+            } else {
+                clickParentIfClickable(zb)
+            }
+            if (clickParentIfClickable(text("继续观看").findOne(450))) {
+                sleep(1000)
+                num++
+                log('等待' + num + '秒')
+            }
+        } while (textEndsWith("，可获得奖励").exists());
+    } else {
+//获取不到时间
+        log('等待视频结束')
+        // clickParentIfClickable(text("继续观看").findOne())
+        num = 0
+        do {
             num++
+            sleep(1000)
             log('等待' + num + '秒')
-        }
-    } while (textEndsWith("，可获得奖励").exists());
-    //判断是否还在广告页面
-    if (currentActivity() == currentPage) {
+        } while (textEndsWith("，可获得奖励").exists());
+    }
+//判断是否还在广告页面
+    if (currentActivity() != params) {
         back()
         sleep(500)
     }
