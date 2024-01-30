@@ -503,8 +503,8 @@ function waitad(params) {
 //等待广告结束
     var num
     if (time) {
-        log('等待' + time + '秒')
-        sleep(1000 * time)
+        log('等待' + (time + 1) + '秒')
+        sleep(1000 * (time + 1))
         num = 0
         do {
             if (zb == null) {
