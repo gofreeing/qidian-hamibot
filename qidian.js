@@ -605,16 +605,20 @@ function getPrize() {
 //倒计时
 function startCountdown(minutes) {
     var count = minutes * 60; // 倒计时的秒数
-    var lastToastTime = minutes
+    let currentTime;
+    var remainingMinutes
+    var remainingSeconds
     for (var i = count; i >= 0; i--) {
-        var remainingMinutes = Math.floor(i / 60); // 剩余分钟数
-        var remainingSeconds = i % 60; // 剩余秒数
+        remainingMinutes = Math.floor(i / 60); // 剩余分钟数
+        remainingSeconds = i % 60; // 剩余秒数
+        currentTime = (i / 60).toFixed(1)
+        //清除控制台
+        console.clear()
         // 每分钟提示倒计时
-        if (lastToastTime > (i / 60).toFixed(1) && i > 5 && remainingSeconds != 0) {
-            lastToastTime = (i / 60).toFixed(1)
-            log("倒计时还剩 " + (i / 60).toFixed(1) + " 分钟 ");
+        if (i > 5 && remainingSeconds != 0 && currentTime % 1 != 0) {
+            log("倒计时还剩 " + currentTime + " 分钟 ");
         }
-        if (remainingMinutes >= 1 && remainingSeconds == 0) {
+        if (remainingMinutes >= 1 && currentTime % 1 == 0 && currentTime - 0.1 < remainingMinutes) {
             log("倒计时还剩 " + remainingMinutes + " 分钟 ");
         }
         // 剩余10秒钟提示倒计时
