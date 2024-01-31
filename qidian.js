@@ -25,6 +25,9 @@ function observeNews() {
 
 //提取数字
 function jstime(textObj) {
+    if (textObj == null) {
+        return null
+    }
     // 存储初始文本内容
     var initText = textObj.text();
     // log(initText)
@@ -33,20 +36,6 @@ function jstime(textObj) {
     return match ? parseInt(match[0]) : null;
 }
 
-/*//提取坐标中心-老方法
-function getXy(obj) {
-    var bounds = obj.bounds();
-    return {
-        centerX: (bounds.left + bounds.right) / 2,
-        centerY: (bounds.top + bounds.bottom) / 2
-    };
-}
-//点击坐标中心
-function clickCenter(params) {
-    var center = getXy(params);
-    click(center.centerX, center.centerY);
-    console.log('点击坐标')
-}*/
 
 //提取坐标中心
 function getXy(obj) {
@@ -71,38 +60,14 @@ function clickCenter(params) {
     console.log('点击坐标')
 }
 
-//判断广告时间
-function adtime() {
-    return jstime(textEndsWith("获得奖励").findOne())
-}
-
 //返回首页
 function backHome(params) {
-    /*while (!(text("书架").visibleToUser(true).exists() && text("精选").visibleToUser(true).exists() && text("听书").visibleToUser(true).exists() && text("发现").visibleToUser(true).exists() && text("我").visibleToUser(true).exists())) {
-        back()
-    }*/
-    /*do {
-        back()
-        sleep(550)
-    } while (!(id("normal").visibleToUser(true).exists()))*/
     do {
         back()
     } while (id("normal").findOne(500) == null)
     console.log('已到主界面');
 }
 
-/*//直到能点击-老方法
-function autoClick_have(params) {
-    obj = params.findOne()
-    clickParentIfClickable(obj)
-    if (cxy) {
-        clickCenter(obj)
-        cxy = false
-    } else {
-        //点击事件成功
-        return true
-    }
-}*/
 
 function clickParentIfClickable(widget) {
     if (InitialValue == null) {
@@ -129,11 +94,6 @@ function clickParentIfClickable(widget) {
     // 递归调用自身，传入父类控件进行下一次查找和点击
 }
 
-//直到能长按
-/*function autolongClick_have(params) {
-    obj = params.findOne()
-    longClickParentIfClickable(obj)
-}*/
 
 function longClickParentIfClickable(widget) {
     if (widget === null) {
@@ -478,7 +438,7 @@ function waitad(params) {
     }
 
     // 获取等待时间
-    var time = adtime()
+    var time = jstime(textEndsWith("，可获得奖励").findOne())
     if (time == null) {
         log('获取不到时间，重新获取')
         log('点击退出')
@@ -490,7 +450,7 @@ function waitad(params) {
             }
             sleep(450)
         } while (!text("继续观看").exists())
-        time = adtime()
+        time = jstime(textEndsWith("可获得奖励").findOne())
         clickParentIfClickable(text("继续观看").findOne())
         if (time == null) {
             time = textMatches(/\d+/).findOnce()
@@ -560,8 +520,6 @@ function buy() {
 //听书
 function listenToBook() {
     var bookV
-    var bookVs//集合
-    var bookVi//数量
     // let listenTime
     bookV = textContains("当日听书").findOne(1000)
     if (bookV == null) {
@@ -585,77 +543,51 @@ function listenToBook() {
 //玩游戏
 function play() {
     var game
-    var games//集合
-    var gamei//数量
     game = textContains("当日玩游戏").findOne(1000)
     if (game == null) {
         console.log('没有游戏可玩')
         return
     }
     game = game.parent()
-    games = game.children()
-    gamei = game.childCount()
-    if (games[gamei - 3].child(0)) {
-        if (games[gamei - 3].child(0).text() == '去完成') {
-            while (true) {
-                var pt = playtime()
-                // var repetitions = 4
-                if (pt) {
-                    do {
+    let finishing
+    var pt
+    while (finishing = game.findOne(text('去完成')) != null) {
+        pt = jstime(game.findOne(textMatches(/\/\d+分钟/))) - jstime(game.findOne(textMatches(/\d+/)))
+        // var repetitions = 4
+        do {
 
-                        if (!clickParentIfClickable(games[gamei - 3])) {
-                            back()
-                            clickParentIfClickable(text("游戏中心").findOne())
-                        }
-                        sleep(500)
-                    } while (textContains("当日玩游戏").exists());
-                    log("前往游戏中心")
-                    textContains("热门").waitFor()
-                    textContains("喜欢").waitFor()
-                    textContains("推荐").waitFor()
-                    if (text("排行").findOne(1000 * 15) == null) {
-                        clickParentIfClickable(text("在线玩").findOne())
-                    } else {
-                        clickParentIfClickable(text("排行").findOne())
-                        text("新游榜").waitFor()
-                        text("热门榜").waitFor()
-                        text("畅销榜").waitFor()
-                        clickParentIfClickable(text("在线玩").findOne())
-                        // repetitions++
-                    }
-                    log("进入游戏")
-                    log('剩余' + (pt + 0.5) + '分钟')
-                    startCountdown(pt + 0.5)
-                    backHome()
-                    // for (let index = 0; index < repetitions; index++) {
-                    //     back()
-                    //     sleep(1000)
-                    // }
-                    log("重新进入福利中心")
-                    clickParentIfClickable(text("我").findOne())
-                    waitForActivity('com.qidian.QDReader.ui.activity.MainGroupActivity')
-                    // clickParentIfClickable(text("我知道了").findOne(750))
-                    clickParentIfClickable(text("福利中心").findOne())
-                    log("等待福利中心加载")
-                    text("限时彩蛋").waitFor()
-
-                } else {
-                    break
-                }
+            if (!clickParentIfClickable(finishing)) {
+                back()
+                clickParentIfClickable(text("游戏中心").findOne())
             }
+            sleep(500)
+        } while (textContains("当日玩游戏").exists());
+        log("前往游戏中心")
+        textContains("热门").waitFor()
+        textContains("喜欢").waitFor()
+        textContains("推荐").waitFor()
+        if (text("排行").findOne(1000 * 15) == null) {
+            clickParentIfClickable(text("在线玩").findOne())
+        } else {
+            clickParentIfClickable(text("排行").findOne())
+            text("新游榜").waitFor()
+            text("热门榜").waitFor()
+            text("畅销榜").waitFor()
+            clickParentIfClickable(text("在线玩").findOne())
+            // repetitions++
         }
+        log("进入游戏")
+        log('剩余' + (pt + 0.5) + '分钟')
+        startCountdown(pt + 0.5)
+        backHome()
+        log("重新进入福利中心")
+        clickParentIfClickable(text("我").findOne())
+        waitForActivity('com.qidian.QDReader.ui.activity.MainGroupActivity')
+        // clickParentIfClickable(text("我知道了").findOne(750))
+        clickParentIfClickable(text("福利中心").findOne())
+        log("等待福利中心加载")
+        text("限时彩蛋").waitFor()
     }
-}
-
-//判断游戏时间
-function playtime() {
-    var game
-    var games//集合
-    var gamei//数量
-    game = textContains("当日玩游戏").findOne().parent()
-    games = game.children()
-    gamei = game.childCount()
-    return jstime(games[gamei - 1]) - jstime(games[gamei - 2])
 }
 
 //领取
