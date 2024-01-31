@@ -512,7 +512,7 @@ function waitad(params) {
             } else {
                 clickParentIfClickable(zb)
             }
-            if (clickParentIfClickable(text("继续观看").findOne(450))) {
+            if (clickParentIfClickable(text("继续观看").findOne(550))) {
                 sleep(1000)
                 num++
                 log('等待' + num + '秒')
