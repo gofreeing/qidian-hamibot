@@ -284,9 +284,13 @@ function looksp() {
             log('找红包位置')
             while (true) {
                 click(right - 1, centerY);
+                click(right - 1, centerY);
                 click(centerX, centerY);
                 log('点击屏幕')
                 sleep(700)
+                if (text("粉丝值说明").exists() || text("全部").exists() || textMatches(/书友圈\d+书友正在讨论/).exists() || text("快去参与讨论").exists()) {
+                    back()
+                }
                 if (text("听书").exists()) {
                     break
                 }
@@ -405,16 +409,16 @@ function waitad(params) {
     while (className("android.view.View").depth(4).exists()) {
         sleep(500)
     }
-    if (textEndsWith("，可获得奖励").findOnce() == null) {
+    if (!textEndsWith("，可获得奖励").exists()) {
         back()
         sleep(500)
         console.log('广告未加载');
         return
     }
     //获取关闭坐标
-    var gb = text("关闭").findOnce()
-    var cross = text("cross").findOnce()
-    var tg = text("跳过广告").findOnce()
+    var gb = text("关闭").findOne(400)
+    var cross = text("cross").findOne(400)
+    var tg = text("跳过广告").findOne(400)
     // var wz = text("此图片未加标签。打开右上角的“更多选项”菜单即可获取图片说明。").findOnce()
     var zb = null
     if (gb) {
@@ -444,6 +448,12 @@ function waitad(params) {
         log('获取不到时间，重新获取')
         log('点击退出')
         do {
+            if (!textEndsWith("，可获得奖励").exists()) {
+                back()
+                sleep(500)
+                console.log('获取不到坐标')
+                return
+            }
             if (zb == null) {
                 click(X, Y)
             } else {
@@ -464,8 +474,8 @@ function waitad(params) {
 //等待广告结束
     var num
     if (time) {
-        log('等待' + (time + 1.25) + '秒')
-        sleep(1000 * (time + 1.25))
+        log('等待' + (time+1) + '秒')
+        sleep(1000 * (time+1))
         num = 0
         do {
             currentPage = currentActivity()
@@ -529,6 +539,7 @@ function listenToBook() {
         console.log('没有听书')
         return
     }
+    // let listeningTime = jstime(bookV);
     // if (textContains("当日玩游戏").findOnce() == null) {
     //      listenTime = jstime(bookVs);
     // }
