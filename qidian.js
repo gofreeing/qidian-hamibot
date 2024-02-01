@@ -277,7 +277,7 @@ function looksp() {
     waitForActivity("com.qidian.QDReader.ui.activity.QDReaderActivity");
     // sleep(2000)
     // var action
-    var currentPage
+    // var currentPage
     //找红包
     while (true) {
         while (true) {
@@ -307,7 +307,7 @@ function looksp() {
         }
         // var is
         // clickParentIfClickable(text("立即领取").findOne())
-        currentPage = currentActivity();
+        // currentPage = currentActivity();
         do {
 
             log('点击红包')
@@ -317,7 +317,7 @@ function looksp() {
             // text("马上抢").waitFor()
             clickParentIfClickable(text("马上抢").findOne())
             //看视频
-            waitad(currentPage)
+            waitad()
             //领碎片
             log('领碎片')
 
@@ -380,6 +380,7 @@ function waitad(params) {
     sp++
     log('看视频' + sp + '个')
     log('看广告')
+    let currentPage
     // 广告时间对象
     var reward
     //等待广告出现
@@ -463,10 +464,11 @@ function waitad(params) {
 //等待广告结束
     var num
     if (time) {
-        log('等待' + (time + 1) + '秒')
-        sleep(1000 * (time + 1))
+        log('等待' + (time + 1.25) + '秒')
+        sleep(1000 * (time + 1.25))
         num = 0
         do {
+            currentPage = currentActivity()
             if (zb == null) {
                 click(X, Y)
             } else {
@@ -484,13 +486,14 @@ function waitad(params) {
         // clickParentIfClickable(text("继续观看").findOne())
         num = 0
         do {
+            currentPage = currentActivity()
             num++
             sleep(1000)
             log('等待' + num + '秒')
         } while (textEndsWith("，可获得奖励").exists());
     }
 //判断是否还在广告页面
-    if (currentActivity() != params) {
+    if (currentPage == currentActivity()) {
         back()
         sleep(500)
     }
