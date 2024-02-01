@@ -552,14 +552,14 @@ function play() {
         return
     }
     game = game.parent()
-    let finishing
+    // let finishing
     var pt
-    while (finishing = game.findOne(text('去完成')) != null) {
+    while (game.findOne(text('去完成')) != null) {
         pt = jstime(game.findOne(textMatches(/\/\d+分钟/))) - jstime(game.findOne(textMatches(/\d+/)))
         // var repetitions = 4
         do {
 
-            if (!clickParentIfClickable(finishing)) {
+            if (!clickParentIfClickable(game.findOne(text('去完成')))) {
                 back()
                 clickParentIfClickable(text("游戏中心").findOne())
             }
@@ -608,28 +608,24 @@ function getPrize() {
 //倒计时
 function startCountdown(minutes) {
     var count = minutes * 60; // 倒计时的秒数
-    let currentTime;
     var remainingMinutes
     var remainingSeconds
     for (var i = count; i >= 0; i--) {
         remainingMinutes = Math.floor(i / 60); // 剩余分钟数
         remainingSeconds = i % 60; // 剩余秒数
-        currentTime = (i / 60).toFixed(1)
         //清除控制台
         console.clear()
         // 每分钟提示倒计时
-        if (i > 5 && remainingSeconds != 0 && currentTime % 1 != 0) {
-            log("倒计时还剩 " + currentTime + " 分钟 ");
+        if (i > 60) {
+            log("倒计时还剩 " + remainingMinutes + " 分钟 " + remainingSeconds + " 秒 ");
         }
-        if (remainingMinutes >= 1 && currentTime % 1 == 0 && currentTime - 0.1 < remainingMinutes) {
-            log("倒计时还剩 " + remainingMinutes + " 分钟 ");
-        }
-        // 剩余10秒钟提示倒计时
-        if (i <= 5) {
+        // 剩余60秒钟提示倒计时
+        if (i <= 60) {
             log("倒计时还剩 " + i + " 秒");
         }
         sleep(1000); // 等待1秒
     }
+    console.clear()
     log("倒计时已结束");
 }
 
