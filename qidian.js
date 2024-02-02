@@ -536,7 +536,8 @@ function listenToBook() {
     if (clickParentIfClickable(bookV.findOne(text('去完成'))) != null) {
         text("听原创小说").waitFor()
         clickParentIfClickable(id("playIv").findOne())
-        sleep(1000 * 10)
+        id("ivPlayCenter").waitFor()
+        // sleep(1000 * 10)
         back()
         clickParentIfClickable(id("btnLeft").findOne(500))
         back()
