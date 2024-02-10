@@ -167,10 +167,11 @@ function poll(params) {
     }*/
     clickParentIfClickable(text('投推荐票').findOne());
     var recommendTicket = textMatches(/拥有\d+主站推荐票/).findOne();
-    if (jstime(recommendTicket) > 0) {
+    let votes = jstime(recommendTicket);
+    if (votes > 0) {
         clickParentIfClickable(text('全部').findOne());
         clickParentIfClickable(textMatches(/投\d+票/).findOne());
-        console.log('已投票');
+        console.log('已投' + votes + '票');
     } else {
         console.log('没有推荐票');
         back();
@@ -183,6 +184,16 @@ function qdao() {
     clickParentIfClickable(textStartsWith('签到').findOne())
     var today = new Date();
     var dayOfWeek = today.getDay();
+    var thread = threads.start(function () {
+        events.observeToast();
+        events.onToast(function (toast) {
+            let news = toast.getText();
+            if (news.indexOf('风险等级') != -1) {
+                console.log(news);
+                engines.stopAllAndToast()
+            }
+        });
+    });
     clickParentIfClickable(text("连签礼包 ").findOne())
     text("连签说明").waitFor()
     do {
@@ -216,7 +227,7 @@ function qdao() {
 //看视频
                 clickParentIfClickable(desc("看视频抽奖喜+1").findOne())
                 waitad()
-                sleep(850)
+                sleep(500)
             } while (desc("看视频抽奖喜+1").exists())
             desc("抽 奖").waitFor()
         } while (true)
@@ -227,7 +238,7 @@ function qdao() {
 
                 clickParentIfClickable(desc("看视频抽奖喜+1").findOne())
                 waitad()
-                sleep(850)
+                sleep(500)
             } while (desc("看视频抽奖喜+1").exists())
             desc("抽 奖").waitFor()
             do {
@@ -242,6 +253,8 @@ function qdao() {
             }
         } while (true)
     }
+    //停止线程执行
+    thread.interrupt();
     //兑换章节卡
     if (dayOfWeek === 0) {
         log("今天是周日");
@@ -293,8 +306,9 @@ function looksp() {
         do {
             log('找红包位置')
             while (true) {
-                click(right - 1, centerY);
-                click(right - 1, centerY);
+                do {
+                    click(right - 1, centerY);
+                } while (id("tag").exists())
                 click(centerX, centerY);
                 log('点击屏幕')
                 sleep(700)
@@ -343,8 +357,9 @@ function looksp() {
             id("btnOk").findOne().click()
         }*/
         clickParentIfClickable(id("btnOk").findOne(500))
-        click(right - 1, centerY);
-        click(right - 1, centerY);
+        do {
+            click(right - 1, centerY);
+        } while (text("红包").exists())
     }
     log('碎片已领完')
     back()
@@ -363,6 +378,16 @@ function lookvd() {
     clickParentIfClickable(text("福利中心").findOne())
     log("等待福利中心加载")
     text("限时彩蛋").waitFor()
+    var thread1 = threads.start(function () {
+        let stop = textContains("领奖上限").findOne()
+        console.log(stop.text());
+        engines.stopAllAndToast();
+    });
+    var thread2 = threads.start(function () {
+        let stop = textContains("风险等级").findOne()
+        console.log(stop.text());
+        engines.stopAllAndToast();
+    });
 //获取当前活动
     while (clickParentIfClickable(text("看视频开宝箱").findOnce()) != null) {
         waitad()
@@ -385,6 +410,9 @@ function lookvd() {
     play()
     log("领取奖励")
     getPrize()
+    //停止线程执行
+    thread1.interrupt();
+    thread2.interrupt();
     log("碎片兑换")
     buy()
     backHome()
@@ -514,10 +542,9 @@ function waitad() {
         back()
         sleep(500)
     }
-    sp++
-    log('看视频' + sp + '个')
     log('广告结束')
-
+    sp++
+    log('已看视频' + sp + '个')
 }
 
 //兑换
@@ -572,15 +599,15 @@ function play() {
         return
     }
     game = game.parent()
-    // let finishing
+    let finishing
     var pt
     device.keepScreenDim();
-    while (game.findOne(text('去完成')) != null) {
+    while ((finishing = game.findOne(text('去完成'))) != null) {
         pt = jstime(game.findOne(textMatches(/\/\d+分钟/))) - jstime(game.findOne(textMatches(/\d+/)))
         // var repetitions = 4
         do {
 
-            if (!clickParentIfClickable(game.findOne(text('去完成')))) {
+            if (!clickParentIfClickable(finishing)) {
                 back()
                 clickParentIfClickable(text("游戏中心").findOne())
             }
