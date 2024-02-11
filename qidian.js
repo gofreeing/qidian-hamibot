@@ -208,13 +208,10 @@ function qdao() {
     if (desc("点击抽奖+1").exists()) {
         clickParentIfClickable(desc("点击抽奖+1").findOne())
         do {
+            //点击抽奖
             do {
-                //点击抽奖
-                clickParentIfClickable(desc("抽 奖").findOne())
-                /*while (textMatches(/剩余\d+次/).exists() && !desc("明天再来").exists()) {
-                    sleep(500)
+                while (clickParentIfClickable(desc("抽 奖").findOne(1000)) == null) {
                 }
-                textMatches(/剩余\d+次/).waitFor()*/
                 initialNumber = textMatches(/剩余\d+次/).findOne().text()
                 while (textMatches(/剩余\d+次/).findOne().text() == initialNumber && jstime(textMatches(/剩余\d+次/).findOne()) != 0 && !desc("明天再来").exists()) {
                     sleep(500)
@@ -223,26 +220,28 @@ function qdao() {
             if (desc("明天再来").exists() || desc("明日再来抽奖").exists()) {
                 break
             }
+            //看视频
             do {
-//看视频
-                clickParentIfClickable(desc("看视频抽奖喜+1").findOne())
+                while (clickParentIfClickable(desc("看视频抽奖喜+1").findOne(1000)) == null) {
+                }
                 waitad()
-                sleep(500)
-            } while (desc("看视频抽奖喜+1").exists())
-            desc("抽 奖").waitFor()
+                sleep(850)
+            } while (!desc("抽 奖").exists())
+            // desc("抽 奖").waitFor()
         } while (true)
     } else if (desc("看视频，得抽奖机会").exists()) {
         clickParentIfClickable(desc("看视频，得抽奖机会").findOne())
         do {
             do {
-
-                clickParentIfClickable(desc("看视频抽奖喜+1").findOne())
+                while (clickParentIfClickable(desc("看视频抽奖喜+1").findOne(1000)) == null) {
+                }
                 waitad()
-                sleep(500)
-            } while (desc("看视频抽奖喜+1").exists())
-            desc("抽 奖").waitFor()
+                sleep(850)
+            } while (!desc("抽 奖").exists())
+            // desc("抽 奖").waitFor()
             do {
-                clickParentIfClickable(desc("抽 奖").findOne())
+                while (clickParentIfClickable(desc("抽 奖").findOne(1000)) == null) {
+                }
                 initialNumber = textMatches(/剩余\d+次/).findOne().text()
                 while (textMatches(/剩余\d+次/).findOne().text() == initialNumber && jstime(textMatches(/剩余\d+次/).findOne()) != 0 && !desc("明天再来").exists()) {
                     sleep(500)
@@ -264,9 +263,12 @@ function qdao() {
         //等待加载
         waitForActivity('com.qidian.QDReader.ui.activity.QDBrowserActivity')
         text("阅读积分").waitFor()
-        // text("周日兑换章节卡").findOne().parent().click()
-        clickParentIfClickable(text("周日兑换章节卡").findOne())
-        sleep(500)
+        do {
+            if (clickParentIfClickable(text("周日兑换章节卡").findOne(1000)) == null && clickParentIfClickable(text("积攒碎片可在本周日兑换").findOne(1000)) == null) {
+                swipe(centerX, centerY, centerX, centerY - 100, 100)
+            }
+            sleep(500)
+        } while (!text("兑换").exists())
         array = text("兑换").find()
         clickParentIfClickable(array[array.length - 1])
         sleep(500)
@@ -359,7 +361,7 @@ function looksp() {
         clickParentIfClickable(id("btnOk").findOne(500))
         do {
             click(right - 1, centerY);
-        } while (text("红包").exists())
+        } while (text("红包").exists() || id("tag").exists())
     }
     log('碎片已领完')
     back()
@@ -617,10 +619,9 @@ function play() {
         textContains("热门").waitFor()
         textContains("喜欢").waitFor()
         textContains("推荐").waitFor()
-        if (text("排行").findOne(1000 * 15) == null) {
+        if (clickParentIfClickable(text("排行").findOne(5000)) == null) {
             clickParentIfClickable(text("在线玩").findOne())
         } else {
-            clickParentIfClickable(text("排行").findOne())
             text("新游榜").waitFor()
             text("热门榜").waitFor()
             text("畅销榜").waitFor()
