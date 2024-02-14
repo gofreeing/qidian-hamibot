@@ -194,6 +194,7 @@ function qdao() {
             }
         });
     });
+    clickParentIfClickable(text("免费抽奖").findOne(1000))
     clickParentIfClickable(text("连签礼包 ").findOne())
     text("连签说明").waitFor()
     do {
@@ -205,12 +206,15 @@ function qdao() {
     log("抽奖详情")
     //抽奖
     let initialNumber
+    let endable=false
     if (desc("点击抽奖+1").exists()) {
         clickParentIfClickable(desc("点击抽奖+1").findOne())
         do {
             //点击抽奖
             do {
+                console.log('点击抽奖')
                 while (clickParentIfClickable(desc("抽 奖").findOne(1000)) == null) {
+                    swipe(centerX, centerY, centerX, centerY - 100, 100)
                 }
                 initialNumber = textMatches(/剩余\d+次/).findOne().text()
                 while (textMatches(/剩余\d+次/).findOne().text() == initialNumber && jstime(textMatches(/剩余\d+次/).findOne()) != 0 && !desc("明天再来").exists()) {
@@ -222,25 +226,51 @@ function qdao() {
             }
             //看视频
             do {
+                initialNumber = textMatches(/剩余\d+次/).findOne().text()
                 while (clickParentIfClickable(desc("看视频抽奖喜+1").findOne(1000)) == null) {
+                    if (desc("明天再来").exists() || desc("明日再来抽奖").exists()) {
+                        endable=true
+                        break
+                    }
+                    swipe(centerX, centerY, centerX, centerY - 100, 100)
+                }
+                if (endable) {
+                    break
                 }
                 waitad()
                 sleep(850)
-            } while (!desc("抽 奖").exists())
-            // desc("抽 奖").waitFor()
+            } while (desc("看视频，得抽奖机会").exists())
+            if (endable) {
+                break
+            }
         } while (true)
     } else if (desc("看视频，得抽奖机会").exists()) {
         clickParentIfClickable(desc("看视频，得抽奖机会").findOne())
         do {
+            //看视频
             do {
+                initialNumber = textMatches(/剩余\d+次/).findOne().text()
                 while (clickParentIfClickable(desc("看视频抽奖喜+1").findOne(1000)) == null) {
+                    if (desc("明天再来").exists() || desc("明日再来抽奖").exists()) {
+                        endable=true
+                        break
+                    }
+                    swipe(centerX, centerY, centerX, centerY - 100, 100)
+                }
+                if (endable) {
+                    break
                 }
                 waitad()
                 sleep(850)
-            } while (!desc("抽 奖").exists())
-            // desc("抽 奖").waitFor()
+            } while (desc("看视频，得抽奖机会").exists())
+            if (endable) {
+                break
+            }
+            // 点击抽奖
             do {
+                console.log('点击抽奖')
                 while (clickParentIfClickable(desc("抽 奖").findOne(1000)) == null) {
+                    swipe(centerX, centerY, centerX, centerY - 100, 100)
                 }
                 initialNumber = textMatches(/剩余\d+次/).findOne().text()
                 while (textMatches(/剩余\d+次/).findOne().text() == initialNumber && jstime(textMatches(/剩余\d+次/).findOne()) != 0 && !desc("明天再来").exists()) {
