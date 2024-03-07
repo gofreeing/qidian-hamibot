@@ -213,7 +213,7 @@ function qdao() {
     } else {
         do {
             clickParentIfClickable(descContains("抽奖").findOne())
-            while (!(desc("抽 奖").exists() || desc("看视频抽奖喜+1").exists())) {
+            while (!(desc("抽 奖").exists() || desc("看视频抽奖喜+1").exists()) && !(desc("明天再来").exists() || desc("明日再来抽奖").exists())) {
                 sleep(500)
             }
             if (desc("抽 奖").exists()) {
@@ -233,7 +233,7 @@ function qdao() {
                 }
                 waitad()
             }
-            clickParentIfClickable(desc("javascript:").findOne())
+            clickParentIfClickable(desc("javascript:").findOne(500))
             sleep(500)
         } while (!(desc("明天再来").exists() || desc("明日再来抽奖").exists()))
     }
@@ -242,12 +242,12 @@ function qdao() {
     //兑换章节卡
     if (dayOfWeek === 0) {
         log("今天是周日");
-        back()
+        /*back()
         sleep(1000)
         clickParentIfClickable(textStartsWith('签到').findOne())
         //等待加载
         waitForActivity('com.qidian.QDReader.ui.activity.QDBrowserActivity')
-        text("阅读积分").waitFor()
+        text("阅读积分").waitFor()*/
         do {
             if (clickParentIfClickable(text("周日兑换章节卡").findOne(1000)) == null && clickParentIfClickable(text("积攒碎片可在本周日兑换").findOne(1000)) == null) {
                 swipe(centerX, centerY, centerX, centerY - 100, 100)
@@ -378,7 +378,7 @@ function lookvd() {
         console.log(stop.text());
         engines.stopAllAndToast();
     });
-//获取当前活动
+
     while (clickParentIfClickable(text("看视频开宝箱").findOnce()) != null) {
         waitad()
         clickParentIfClickable(text("我知道了").findOne(500))
@@ -420,7 +420,7 @@ function waitad() {
         sleep(500)
     }
 //等待广告时间对象
-    reward = textEndsWith("，可获得奖励").findOne(9000)
+    reward = textEndsWith("，可获得奖励").findOne(5000)
     if (reward == null) {
         if (className("android.view.View").depth(4).exists()) {
             while (className("android.view.View").depth(4).exists()) {
@@ -623,6 +623,7 @@ function play() {
             text("新游榜").waitFor()
             text("热门榜").waitFor()
             text("畅销榜").waitFor()
+            clickParentIfClickable(text("热门榜").findOne())
             clickParentIfClickable(text("在线玩").findOne())
             // repetitions++
         }
@@ -649,8 +650,8 @@ function getPrize() {
         // prizePool[i].click()
         clickParentIfClickable(prizePool[i])
         clickParentIfClickable(text("我知道了").findOne(750))
-
     }
+    clickParentIfClickable(id("ivClose").findOne(500))
 }
 
 //倒计时
