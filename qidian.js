@@ -420,7 +420,7 @@ function waitad() {
         sleep(500)
     }
 //等待广告时间对象
-    reward = textEndsWith("，可获得奖励").findOne(5000)
+    reward = textEndsWith("，可获得奖励").findOne(7000)
     if (reward == null) {
         if (className("android.view.View").depth(4).exists()) {
             while (className("android.view.View").depth(4).exists()) {
@@ -429,13 +429,13 @@ function waitad() {
             if (!textEndsWith("，可获得奖励").exists()) {
                 back()
                 sleep(500)
-                console.log('广告未加载');
+                console.log('广告未加载1');
                 return
             }
         } else if (className("android.view.View").depth(5).exists()) {
             back()
             sleep(500)
-            console.log('广告未加载');
+            console.log('广告未加载2');
             return
         } else {
             console.log('未进入广告页面');
@@ -449,7 +449,7 @@ function waitad() {
     if (!textEndsWith("，可获得奖励").exists()) {
         back()
         sleep(500)
-        console.log('广告未加载');
+        console.log('广告未加载3');
         return
     }
     //获取关闭坐标
@@ -580,13 +580,13 @@ function listenToBook() {
     // }
     bookV = bookV.parent()
     if (clickParentIfClickable(bookV.findOne(text('去完成'))) != null) {
-        text("听原创小说").waitFor()
-        clickParentIfClickable(id("playIv").findOne())
+//         text("听原创小说").waitFor()
+//         clickParentIfClickable(id("playIv").findOne())
         id("ivPlayCenter").waitFor()
-        // sleep(1000 * 10)
+//         sleep(1000 * 10)
         back()
-        clickParentIfClickable(id("btnLeft").findOne(500))
-        back()
+        clickParentIfClickable(id("btnLeft").findOne(850))
+//         back()
     }
 }
 
@@ -638,6 +638,8 @@ function play() {
         clickParentIfClickable(text("福利中心").findOne())
         log("等待福利中心加载")
         text("限时彩蛋").waitFor()
+        game = textContains("当日玩游戏").findOne(1000)
+        game = game.parent()
     }
     device.cancelKeepingAwake();
 }
