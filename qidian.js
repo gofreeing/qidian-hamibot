@@ -420,13 +420,13 @@ function waitad() {
         sleep(500)
     }
 //等待广告时间对象
-    reward = textEndsWith("，可获得奖励").findOne(7000)
+    reward = textEndsWith("可获得奖励").findOne(7000)
     if (reward == null) {
         if (className("android.view.View").depth(4).exists()) {
             while (className("android.view.View").depth(4).exists()) {
                 sleep(500)
             }
-            if (!textEndsWith("，可获得奖励").exists()) {
+            if (!textEndsWith("可获得奖励").exists()) {
                 back()
                 sleep(500)
                 console.log('广告未加载1');
@@ -446,7 +446,7 @@ function waitad() {
     while (className("android.view.View").depth(4).exists()) {
         sleep(500)
     }
-    if (!textEndsWith("，可获得奖励").exists()) {
+    if (!textEndsWith("可获得奖励").exists()) {
         back()
         sleep(500)
         console.log('广告未加载3');
@@ -480,12 +480,12 @@ function waitad() {
     }
 
     // 获取等待时间
-    var time = jstime(textEndsWith("，可获得奖励").findOne())
+    var time = jstime(textEndsWith("可获得奖励").findOne())
     if (time == null) {
         log('获取不到时间，重新获取')
         log('点击退出')
         do {
-            if (!textEndsWith("，可获得奖励").exists()) {
+            if (!textEndsWith("可获得奖励").exists()) {
                 back()
                 sleep(500)
                 console.log('获取不到坐标')
@@ -525,7 +525,7 @@ function waitad() {
                 num++
                 log('等待' + num + '秒')
             }
-        } while (textEndsWith("，可获得奖励").exists());
+        } while (textEndsWith("可获得奖励").exists());
     } else {
 //获取不到时间
         log('等待视频结束')
@@ -535,7 +535,7 @@ function waitad() {
             num++
             sleep(1000)
             log('等待' + num + '秒')
-        } while (textEndsWith("，可获得奖励").exists());
+        } while (textEndsWith("可获得奖励").exists());
     }
 //判断是否还在广告页面
     if (className("android.view.View").depth(5).exists()) {
