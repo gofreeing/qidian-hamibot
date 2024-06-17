@@ -497,9 +497,9 @@ function waitad() {
                 clickParentIfClickable(zb)
             }
             sleep(500)
-        } while (!text("继续观看").exists())
+        } while (!textStartsWith("继续").exists())
         time = jstime(textEndsWith("可获得奖励").findOne())
-        clickParentIfClickable(text("继续观看").findOne())
+        clickParentIfClickable(textStartsWith("继续").findOne())
         if (time == null) {
             time = textMatches(/\d+/).findOnce()
             if (time) {
@@ -520,7 +520,7 @@ function waitad() {
             } else {
                 clickParentIfClickable(zb)
             }
-            if (clickParentIfClickable(text("继续观看").findOne(500))) {
+            if (clickParentIfClickable(textStartsWith("继续").findOne(500))) {
                 sleep(1000)
                 num++
                 log('等待' + num + '秒')
@@ -580,13 +580,20 @@ function listenToBook() {
     // }
     bookV = bookV.parent()
     if (clickParentIfClickable(bookV.findOne(text('去完成'))) != null) {
-//         text("听原创小说").waitFor()
-//         clickParentIfClickable(id("playIv").findOne())
+        sleep(1500)
+        let isback=false
+        if (text("听原创小说").exists()){
+            isback=true
+            text("听原创小说").waitFor()
+            clickParentIfClickable(id("playIv").findOne())
+        }
         id("ivPlayCenter").waitFor()
 //         sleep(1000 * 10)
         back()
         clickParentIfClickable(id("btnLeft").findOne(850))
-//         back()
+        if (isback){
+            back()
+        }
     }
 }
 
