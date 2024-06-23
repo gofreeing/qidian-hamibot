@@ -319,9 +319,9 @@ function looksp() {
             click(1, centerY);
             click(1, centerY);
             sleep(800)
-        } while (!text("红包").exists())
+        } while (!textEndsWith("红包").exists())
         log('红包位置已找到')
-        if (text("0个").exists()) {
+        if (textStartsWith("0个").exists()) {
             log('没有红包')
             break
         }
@@ -331,7 +331,7 @@ function looksp() {
         do {
 
             log('点击红包')
-            clickParentIfClickable(text("红包").findOne())
+            clickParentIfClickable(textEndsWith("红包").findOne())
             log('打开红包')
             // clickParentIfClickable(id("layoutHongbaoRoot").findOne())
             text("马上抢").waitFor()
