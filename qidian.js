@@ -334,6 +334,11 @@ function looksp() {
             clickParentIfClickable(textEndsWith("红包").findOne())
             log('打开红包')
             // clickParentIfClickable(id("layoutHongbaoRoot").findOne())
+            text("红包广场").waitFor()
+            sleep(1000)
+            if (text("当前章节暂无红包").exists()) {
+                break
+            }
             text("马上抢").waitFor()
             clickParentIfClickable(text("马上抢").findOne())
             //看视频
