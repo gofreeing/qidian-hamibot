@@ -483,9 +483,18 @@ function waitad() {
         Y = parseInt((y1 + y2) / 2)
         // var nocross = true
     }
-
     // 获取等待时间
-    var time = jstime(textEndsWith("可获得奖励").findOne())
+    let textObj = textEndsWith("可获得奖励").findOne()
+    var time = jstime(textObj)
+    if (textObj.text().includes("有声书")) {
+        if (zb == null) {
+            click(X, Y)
+        } else {
+            clickParentIfClickable(zb)
+        }
+        sleep(500)
+        clickParentIfClickable(textStartsWith("继续").findOne())
+    }
     if (time == null) {
         log('获取不到时间，重新获取')
         log('点击退出')
@@ -505,12 +514,14 @@ function waitad() {
         } while (!textStartsWith("继续").exists())
         time = jstime(textEndsWith("可获得奖励").findOne())
         clickParentIfClickable(textStartsWith("继续").findOne())
+/*
         if (time == null) {
             time = textMatches(/\d+/).findOnce()
             if (time) {
                 time = parseInt(time.text())
             }
         }
+*/
     }
 
 //等待广告结束
