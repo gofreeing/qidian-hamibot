@@ -709,7 +709,9 @@ function waitad() {
     }
     log('广告结束')
     sp++
+    clickParentIfClickable(text("知道了").findOne(1500))
     log('已看视频' + sp + '个')
+    sleep(1000)
 }
 
 //等待广告
@@ -918,7 +920,7 @@ function play() {
             className("android.widget.TextView").text("去完成").clickable(true).depth(16).findOne().click()
             sleep(1000)
         } while (textContains("当日玩游戏").exists());
-        log("前往游戏中心")
+        /*log("前往游戏中心")
         textContains("热门").waitFor()
         // textContains("喜欢").waitFor()
         textContains("推荐").waitFor()
@@ -931,7 +933,7 @@ function play() {
             clickParentIfClickable(text("热门榜").findOne())
             clickParentIfClickable(text("在线玩").findOne())
             // repetitions++
-        }
+        }*/
         log("进入游戏")
         log('剩余' + (pt + 0.5) + '分钟')
         startCountdown(pt + 0.5)
