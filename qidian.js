@@ -1,1015 +1,603 @@
-console.show();
-auto.waitFor();
-// if (!requestScreenCapture()) {
-//     toastLog('没有授予 Hamibot 屏幕截图权限');
-//     hamibot.exit();
-// }
-sleep(1000)
-console.setTitle("自动任务");
-console.setPosition(device.width * 2 / 5, 0)
-console.setSize(device.width / 3, device.height / 3)
-var ham = hamibot.env
-var bounds
-var centerX
-var centerY
-var right
-var sp = 0
-var X
-var Y
-var InitialValue = null
-// var clickResults
-// var news = ''
-//工具模块
-/*//通知
-function observeNews() {
-    events.observeToast();
-    events.onToast(function (toast) {
-        news = toast.getText();
+"ui"; // 第一行必须是这个
+
+var taskMode = "all"; // 全局变量，记录用户选了什么模式
+
+ui.layout(
+    <vertical padding="16">
+        <text text="起点福利中心助手" textSize="22sp" gravity="center" margin="10" textColor="#333333" />
+        <button id="btn_video" text="1. 只看视频任务" margin="8" height="60" />
+        <button id="btn_game" text="2. 只挂游戏任务" margin="8" height="60" />
+        <button id="btn_all" text="3. 全部顺序执行" margin="8" height="60" />
+        <text text="点击按钮后，脚本将自动运行" margin="10" gravity="center" textColor="#666666" />
+    </vertical>
+);
+
+// --- 核心修复：点击事件必须用 threads.start ---
+
+ui.btn_video.click(() => {
+    taskMode = "video";
+    runScript(); // 调用下面定义的启动函数
+});
+
+ui.btn_game.click(() => {
+    taskMode = "game";
+    runScript();
+});
+
+ui.btn_all.click(() => {
+    taskMode = "all";
+    runScript();
+});
+
+function runScript() {
+    threads.start(function () {
+        updateLog("当前执行模式: " + taskMode);
+        try {
+            main();
+        } catch (e) {
+            updateLog("发生异常: " + e);
+        } finally {
+            device.cancelKeepingAwake();
+            updateLog("脚本运行结束。");
+            // --- 关键修改点：关闭 UI 页面 ---
+            ui.post(() => {
+                ui.finish(); // 彻底关闭脚本界面
+            });
+        }
     });
-}*/
-/*var thread = threads.start(function(){
-    events.observeToast();
-    events.onToast(function (toast) {
-        news = toast.getText();
-        console.log(news);
-    });
-});*/
+}
 
-//提取数字
-function jstime(textObj) {
-    if (textObj == null) {
-        return null
+var qidianPackageName = "com.qidian.QDReader";
+
+// --- 1. 配置：任务筛选与全词库 ---
+var whiteList = ["激励任务", "惊喜福利", "3个广告", "玩游戏", "再玩"];
+var claimKeywords = ["领奖励", "领章节卡", "领积分"];
+
+var jumpKeywords = ["下载应用", "了解更多", "查看详情", "点击.*", "去.*", "立即.*", "领取.*"];
+var timerKeywords = ["获得奖励", "看", "秒", "还剩", "浏览", "继续看", "点击后"];
+var jumpRegex = new RegExp(jumpKeywords.join("|"));
+
+// --- 2. 基础工具函数 ---
+
+function jstime(textStr) {
+    if (!textStr) return null;
+    let reg = /(?:还剩|看|浏览|等待|继续看|点击后)\s*(\d+)\s*秒|(\d+)\s*秒(?:后)?/g;
+    let match = reg.exec(textStr);
+    if (match) return parseInt(match[1] || match[2]);
+    return null;
+}
+
+function strHasArr(s, a) {
+    if (!s) return false;
+    for (let i = 0; i < a.length; i++) {
+        // 如果关键词里包含正则表达式符号 .*
+        if (a[i].indexOf(".*") > -1) {
+            if (new RegExp(a[i]).test(s)) return true;
+        } else {
+            // 普通文字匹配
+            if (s.indexOf(a[i]) > -1) return true;
+        }
     }
-    // 存储初始文本内容
-    var initText = textObj.text();
-    // log(initText)
-    //获取时间
-    var match = initText.match(/\d+/g);
-    return match ? parseInt(match[0]) : null;
+    return false;
 }
-
-
-//提取坐标中心
-function getXy(obj) {
-    if (obj == null) {
-        return null;
-    }
-    var bounds = obj.bounds();
-    return {
-        centerX: (bounds.left + bounds.right) / 2,
-        centerY: (bounds.top + bounds.bottom) / 2
-    };
-}
-
-//点击坐标中心
-function clickCenter(params) {
-    var center = getXy(params);
-    if (center == null) {
-        console.log('没找到')
-        return
-    }
-    click(center.centerX, center.centerY);
-    console.log('点击坐标')
-}
-
-//返回首页
-function backHome(params) {
-    do {
-        back()
-    } while (id("normal").findOne(500) == null)
-    console.log('已到主界面');
-}
-
 
 function clickParentIfClickable(widget) {
-    if (InitialValue == null) {
-        InitialValue = widget
-    }
-    if (widget === null) {
-        console.log('找不到');
-        InitialValue = null
-        return null;  // 终止递归的条件：如果 widget 是空值，则结束递归
-    }
-    if (widget.click()) {
-        console.log('已点击');
-        InitialValue = null
-        return true;  // 点击控件
-    }
-    var parentWidget = widget.parent();  // 获取控件的父类
-    if (parentWidget === null) {
-        console.log('不可点击');
-        clickCenter(InitialValue)
-        InitialValue = null
-        return false;
-    }
-    return clickParentIfClickable(parentWidget);
-    // 递归调用自身，传入父类控件进行下一次查找和点击
+    if (!widget) return false;
+    if (widget.clickable()) return widget.click();
+    let p = widget.parent();
+    if (p) return clickParentIfClickable(p);
+    return false;
 }
 
+function findCloseBtn() {
+    let reg = /.*close.*|.*[xX×✕].*|关闭|退出|放弃|知道了|收下奖励|领奖成功|跳过/;
 
-function longClickParentIfClickable(widget) {
-    if (widget === null) {
-        console.log('找不到');
-        return null;  // 终止递归的条件：如果 widget 是空值，则结束递归
+    // --- 策略 A: 尝试属性匹配 (ID, Text, Desc) ---
+    let btn = idMatches(reg).findOnce() || textMatches(reg).findOnce() || descMatches(reg).findOnce();
+    if (btn) {
+        updateLog("侦测到属性匹配按钮: [" + (btn.text() || btn.desc() || "ID属性") + "]");
+        return btn;
     }
-    if (widget.longClick()) {
-        console.log('已长按');
-        return true;  // 点击控件
+
+    // --- 策略 B: 利用 OCR 结果定位 (处理图片里的 X) ---
+    let img = captureScreen();
+    if (img) {
+        let results = paddle.ocr(img);
+        for (let res of results) {
+            // 如果 OCR 在右上角区域识别到了类似 x, X, ×, ✕ 的符号
+            if (res.text.match(/[xX×✕✕]/) && res.bounds.left > device.width * 0.6 && res.bounds.bottom < device.height * 0.2) {
+                updateLog("OCR 识别到图片中的关闭符号: " + res.text);
+                // 构造一个兼容的对象返回
+                return { bounds: () => res.bounds, clickable: () => true };
+            }
+        }
     }
-    var parentWidget = widget.parent();  // 获取控件的父类
-    if (parentWidget === null) {
-        console.log('不可长按');
-        return false
+
+    // --- 策略 C: 坐标判定优化 ---
+    let list = classNameMatches(/.*View|.*ImageView|.*ViewGroup/).find();
+    let target = null;
+    let maxRight = 0;
+
+    for (let i = 0; i < list.length; i++) {
+        let b = list[i].bounds();
+        if (b.left > device.width * 0.85 && b.top < device.height * 0.2 && b.top > 40) {
+            if (b.width() > 50 && b.width() < 160 && Math.abs(b.width() - b.height()) < 25) {
+                // 如果有多个，取最靠右的一个
+                if (b.left > maxRight) {
+                    maxRight = b.left;
+                    target = list[i];
+                }
+            }
+        }
     }
-    return longClickParentIfClickable(parentWidget);  // 递归调用自身，传入父类控件进行下一次查找和点击
+
+    if (target) {
+        updateLog("侦测到最右侧关闭容器: " + target.className());
+        return target;
+    }
+    updateLog("所有策略均未找到按钮");
+    return null;
 }
 
-
-//主界面模块
-//启动起点获取坐标中心点
-function start() {
-    if (auto.service == null) {
-        log("请先开启无障碍服务！");
-    } else {
-        log("无障碍服务已开启");
-        home()
-        sleep(1000)
-        launch("com.qidian.QDReader");
-        waitForActivity('com.qidian.QDReader.ui.activity.MainGroupActivity')
-        // id("imgClose").findOne(750)
-        // textStartsWith("签到").findOne(3000)
-        back()
-        bounds = className("android.widget.FrameLayout").depth(0).findOne()
-        centerX = getXy(bounds).centerX;
-        centerY = getXy(bounds).centerY;
-        right = bounds.bounds().right
-        log("应用已启动")
-        // sleep(1500)
-
+function closeAdByScan() {
+    updateLog("启动精准盲点补偿...");
+    // 往左多靠一点，不要在最边缘点
+    let xr = device.width - 60;
+    // 增加覆盖范围：从高度 150 扫描到 450
+    for (let i = 0; i < 10; i++) {
+        let yr = 200 + (i * 30);
+        click(xr, yr);
+        // 如果点中了，页面通常会发生变化
+        if (textMatches(/激励任务|领奖励|去完成/).exists()) {
+            updateLog("盲点成功归位");
+            return;
+        }
+        sleep(100);
     }
 }
 
-//投推荐票
-function poll(params) {
-    if (ham.text_01 === '') {
-        console.log('没填书');
-        return;
-    }
+function updateLog(txt) { console.info("> " + txt); }
 
-    var bookText = textContains(ham.text_01).findOne(500);
-    if (bookText === null) {
-        console.log('没找到该书');
-        return;
-    }
-    if (!longClickParentIfClickable(bookText)) {
-        console.log('投票出现问题请重试');
-        return;
-    }
-    /*if (ca) {
-        console.log('投票出现问题请重试');
-        ca = false;
-        return;
-    }*/
-    clickParentIfClickable(text('投推荐票').findOne());
-    var recommendTicket = textMatches(/拥有\d+主站推荐票/).findOne();
-    let votes = jstime(recommendTicket);
-    if (votes > 0) {
-        clickParentIfClickable(text('全部').findOne());
-        clickParentIfClickable(textMatches(/投\d+票/).findOne());
-        console.log('已投' + votes + '票');
+function getFreshCapture() {
+    swipe(500, 1000, 501, 1001, 5); 
+    sleep(300); 
+    let temp = captureScreen();
+    if (temp) temp.recycle(); 
+    let realCap = captureScreen();
+    return realCap;
+}
+
+// --- 3. 强化版启动逻辑 ---
+
+function cleanPopups() {
+    let currAct = currentActivity();
+    if (currAct.indexOf("dialog") > -1 || currAct.indexOf("judian") > -1) {
+        updateLog("检测到弹窗 [" + currAct.split('.').pop() + "]，执行 back...");
         back();
-    } else {
-        console.log('没有推荐票');
-        back();
+        sleep(1000);
+        return true;
     }
+    return false;
 }
 
-//签到
-/*
-function qdao() {
-    log("签到")
-    clickParentIfClickable(textStartsWith('签到').findOne())
-    var today = new Date();
-    var dayOfWeek = today.getDay();
-    var thread = threads.start(function () {
-        events.observeToast();
-        events.onToast(function (toast) {
-            let news = toast.getText();
-            if (news.indexOf('风险等级') != -1) {
-                console.log(news);
-                engines.stopAllAndToast()
-            }
-        });
-    });
-    clickParentIfClickable(text("免费抽奖").findOne(1500))
-    clickParentIfClickable(text("连签礼包 ").findOne())
-    text("连签说明").waitFor()
-    do {
-        clickParentIfClickable(text("未领取").findOnce())
-    } while (text("未领取").exists());
-    back()
-    waitForActivity('com.qidian.QDReader.ui.activity.QDBrowserActivity')
-    text("阅读积分").waitFor()
-    log("抽奖详情")
-    //抽奖
-    let initialNumber
-    let currentNumber
-    // let endable = false
-    if (desc("明天再来").exists() || desc("明日再来抽奖").exists()) {
-        console.log('无抽奖')
-    } else {
-        do {
-            clickParentIfClickable(descContains("抽奖").findOne())
-            while (!(desc("抽 奖").exists() || desc("看视频抽奖喜+1").exists()) && !(desc("明天再来").exists() || desc("明日再来抽奖").exists())) {
-                sleep(500)
-            }
-            if (desc("抽 奖").exists()) {
-//点击抽奖
-                console.log('点击抽奖')
-                while (clickParentIfClickable(desc("抽 奖").findOne(1000)) == null) {
-                    swipe(centerX, centerY, centerX, centerY - 100, 100)
-                }
-                initialNumber = jstime(textMatches(/剩余\d+次/).findOne())
-                while (initialNumber == (currentNumber = jstime(textMatches(/剩余\d+次/).findOne())) && currentNumber != 0) {
-                    sleep(500)
-                }
-            } else if (desc("看视频抽奖喜+1").exists()) {
-//看视频
-                while (clickParentIfClickable(desc("看视频抽奖喜+1").findOne(1000)) == null) {
-                    swipe(centerX, centerY, centerX, centerY - 100, 100)
-                }
-                waitad()
-            }
-            clickParentIfClickable(desc("javascript:").findOne(500))
-            sleep(500)
-        } while (!(desc("明天再来").exists() || desc("明日再来抽奖").exists()))
-    }
-    //停止线程执行
-    thread.interrupt();
-    //兑换章节卡
-    if (dayOfWeek === 0) {
-        log("今天是周日");
-        /!*back()
-        sleep(1000)
-        clickParentIfClickable(textStartsWith('签到').findOne())
-        //等待加载
-        waitForActivity('com.qidian.QDReader.ui.activity.QDBrowserActivity')
-        text("阅读积分").waitFor()*!/
-        do {
-            if (clickParentIfClickable(text("周日兑换章节卡").findOne(1000)) == null && clickParentIfClickable(text("积攒碎片可在本周日兑换").findOne(1000)) == null) {
-                swipe(centerX, centerY, centerX, centerY - 100, 100)
-            }
-            sleep(500)
-        } while (!text("兑换").exists())
-        array = text("兑换").find()
-        clickParentIfClickable(array[array.length - 1])
-        sleep(500)
-        array = text("兑换").find()
-        // console.log(array.length);
-        clickParentIfClickable(array[array.length - 1])
-        sleep(1500)
-    } else {
-        log("今天不是周日");
-    }
-    back()
-    sleep(500)
-    if (text("免费抽奖").exists()) {
-        back()
-    }
-}
-*/
-function qdao() {
-    log("签到")
-    // clickParentIfClickable(textStartsWith('签到').findOne())
-    clickParentIfClickable(text("我").findOne())
-    // waitForActivity('com.qidian.QDReader.ui.activity.MainGroupActivity')
-    clickParentIfClickable(text("我知道了").findOne(1000))
-    clickParentIfClickable(text("福利中心").findOne())
-    log("等待福利中心加载")
-    //text("限时彩蛋").waitFor()
-    text("看视频得奖励").waitFor()
-    var today = new Date();
-    var dayOfWeek = today.getDay();
-    var thread = threads.start(function () {
-        events.observeToast();
-        events.onToast(function (toast) {
-            let news = toast.getText();
-            if (news.indexOf('风险等级') != -1) {
-                console.log(news);
-                engines.stopAllAndToast()
-            }
-        });
-    });
-    /*clickParentIfClickable(text("免费抽奖").findOne(1500))
-    clickParentIfClickable(text("连签礼包 ").findOne())
-    text("连签说明").waitFor()
-    do {
-        clickParentIfClickable(text("未领取").findOnce())
-    } while (text("未领取").exists());
-    back()
-    waitForActivity('com.qidian.QDReader.ui.activity.QDBrowserActivity')
-    text("阅读积分").waitFor()*/
-    clickParentIfClickable(text("今日已签到").findOne(1000))
-    log("抽奖详情")
-    //抽奖 text = 看视频得抽奖机会text = 抽奖text = 去抽奖 ×1text = 明天再来text = 抽奖 ×0text = 今日已签到text = 看视频抽奖机会+1
-    let initialNumber
-    let currentNumber
-    // let endable = false
-    if (text("抽奖机会 ×0").findOne(500)) {
-        console.log('无抽奖')
-    } else {
-        do {
-            if (textMatches(/抽奖机会 ×\d+/).exists()) {
-                console.log('抽奖')
-                initialNumber = jstime(textMatches(/抽奖机会 ×\d+/).findOne())
-                clickParentIfClickable(textMatches(/抽奖机会 ×\d+/).findOne())
-                // clickParentIfClickable(text("抽奖").findOne(1500))
-                do {
-                    if (clickParentIfClickable(text("抽奖").findOne(1500)) == null) {
-                        home()
-                        sleep(1000)
-                        launch("com.qidian.QDReader")
-                    }
-                    sleep(3000)
-                } while (!(text("抽奖机会 ×0").exists() || text("看视频抽奖机会+1").exists() || text("看视频可抽奖").exists()))
-                // if (text("抽奖 ×0").exists()||text("明天再来").exists())
-                // {
-                //     break
-                // }
-            } else if (text("看视频可抽奖").exists()) {
-                console.log('看视频')
-                clickParentIfClickable(text("看视频可抽奖").findOne())
-                if (clickParentIfClickable(text("看视频抽奖机会+1").findOne(1500)) == null) {
-                    home()
-                    sleep(1000)
-                    launch("com.qidian.QDReader")
-                }
-                waitad()
-                do {
-                    sleep(3000)
-                } while (clickParentIfClickable(text("看视频抽奖机会+1").findOne(1000)) != null)
-            }
-            /*clickParentIfClickable(descContains("抽奖").findOne())
-            while (!(desc("抽 奖").exists() || desc("看视频抽奖喜+1").exists()) && !(desc("明天再来").exists() || desc("明日再来抽奖").exists())) {
-                sleep(500)
-            }
-            if (desc("抽 奖").exists()) {
-//点击抽奖
-                console.log('点击抽奖')
-                while (clickParentIfClickable(desc("抽 奖").findOne(1000)) == null) {
-                    swipe(centerX, centerY, centerX, centerY - 100, 100)
-                }
-                initialNumber = jstime(textMatches(/剩余\d+次/).findOne())
-                while (initialNumber == (currentNumber = jstime(textMatches(/剩余\d+次/).findOne())) && currentNumber != 0) {
-                    sleep(500)
-                }
-            } else if (desc("看视频抽奖喜+1").exists()) {
-//看视频
-                while (clickParentIfClickable(desc("看视频抽奖喜+1").findOne(1000)) == null) {
-                    swipe(centerX, centerY, centerX, centerY - 100, 100)
-                }
-                waitad()
-            }
-            clickParentIfClickable(desc("javascript:").findOne(500))
-            sleep(500)*/
-        } while (!(text("抽奖 ×0").exists() || text("明天再来").exists()))
-    }
-    //停止线程执行
-    thread.interrupt();
-    //兑换章节卡 text =  兑换
-    if (dayOfWeek === 0) {
-        log("今天是周日");
-        /*back()
-        sleep(1000)
-        clickParentIfClickable(textStartsWith('签到').findOne())
-        //等待加载 text = 积攒碎片兑章节卡
-        waitForActivity('com.qidian.QDReader.ui.activity.QDBrowserActivity')
-        text("阅读积分").waitFor()*/
-        /*do {
-            if (clickParentIfClickable(text("周日兑换章节卡").findOne(1000)) == null && clickParentIfClickable(text("积攒碎片兑章节卡").findOne(1000)) == null) {
-                swipe(centerX, centerY, centerX, centerY - 100, 100)
-            }
-            sleep(500)
-        } while (!text("兑换").exists())*/
-        clickParentIfClickable(text("去兑换 周日").findOne(1500))
-        sleep(2000)
-        array = text("兑换").find()
-        clickParentIfClickable(array[array.length - 1])
-        sleep(2000)
-        array = text("兑换").find()
-        clickParentIfClickable(array[array.length - 1])
-        sleep(2500)
-    } else {
-        log("今天不是周日");
-    }
-    /*back()
-    sleep(500)text = 兑换
-    if (text("免费抽奖").exists()) {
-        back()
-    }*/
-    backHome()
-}
+function launchAndGo() {
+    updateLog("准备启动起点 App...");
+    app.launchPackage(qidianPackageName);
 
+    let atMePage = false;
+    for (let i = 0; i < 15; i++) {
+        let currAct = currentActivity();
+        updateLog("当前页面: " + currAct.split('.').pop());
 
-//精选模块
-//激励碎片
-function looksp() {
-    log('领碎片')
-    clickParentIfClickable(text("精选").findOne())
-    log('已进入精选')
-    clickParentIfClickable(text("新书").findOne())
-    clickParentIfClickable(text("换一换").findOne())
-    sleep(800)
-    clickParentIfClickable(id("rootBookLayout").findOne())
-    log('已进入小说详细页')
-    clickParentIfClickable(textEndsWith("阅读").findOne())
-    log('已打开小说')
-    waitForActivity("com.qidian.QDReader.ui.activity.QDReaderActivity");
-    // sleep(2000)
-    // var action
-    // var currentPage
-    //找红包
-    while (true) {
-        do {
-            log('找红包位置')
-            while (true) {
-                do {
-                    click(right - 1, centerY);
-                } while (id("tag").exists())
-                click(centerX, centerY);
-                log('点击屏幕')
-                sleep(700)
-                if (text("目录").exists()) {
-                    break
-                }
-                if (text("粉丝值说明").exists() || text("全部").exists() || textMatches(/书友圈\d+书友正在讨论/).exists() || text("快去参与讨论").exists()) {
-                    back()
-                    sleep(1000)
-                } else if (text("发表").exists()) {
-                    back()
-                    back()
-                    sleep(1000)
-                }
-            }
-            clickParentIfClickable(text("下一章").findOne())
-            // waitForActivity("com.qidian.QDReader.ui.activity.QDReaderActivity");
-            click(1, centerY);
-            click(1, centerY);
-            sleep(800)
-        } while (!textEndsWith("红包").exists())
-        log('红包位置已找到')
-        if (textStartsWith("0个").exists()) {
-            log('没有红包')
-            break
+        if (currAct.indexOf("dialog") > -1 || currAct.indexOf("judian") > -1) {
+            updateLog("检测到 Activity 弹窗，执行 back...");
+            back(); sleep(1500);
+            continue;
         }
-        // var is
-        // clickParentIfClickable(text("立即领取").findOne())
-        // currentPage = currentActivity();
-        do {
 
-            log('点击红包')
-            clickParentIfClickable(textEndsWith("红包").findOne())
-            log('打开红包')
-            // clickParentIfClickable(id("layoutHongbaoRoot").findOne())
-            text("红包广场").waitFor()
-            sleep(1000)
-            if (text("当前章节暂无红包").exists()) {
-                break
+        if (currAct.indexOf("MainGroupActivity") > -1) {
+            if (text("福利中心").exists()) {
+                updateLog("成功到达【我】页面");
+                atMePage = true;
+                break;
+            } else if (i > 3) {
+                updateLog("疑似存在 View 型弹窗遮挡，尝试执行 back...");
+                back();
+                sleep(1500);
             }
-            text("马上抢").waitFor()
-            clickParentIfClickable(text("马上抢").findOne())
-            //看视频
-            waitad()
-            //领碎片
-            log('领碎片')
-
-        } while (clickParentIfClickable(text("立即领取").findOne(3000)) == null)
-        /*sleep(500)
-        if (id("btnOk").exists()) {
-            id("btnOk").findOne().click()
-        }*/
-        clickParentIfClickable(id("btnOk").findOne(500))
-        do {
-            click(right - 1, centerY);
-        } while (text("红包").exists() || id("tag").exists())
-    }
-    log('碎片已领完')
-    back()
-    clickParentIfClickable(text("取消").findOne(500))
-    backHome()
-
-}
-
-
-//福利中心模块
-//看视频
-function lookvd() {
-    clickParentIfClickable(text("我").findOne())
-    // waitForActivity('com.qidian.QDReader.ui.activity.MainGroupActivity')
-    clickParentIfClickable(text("我知道了").findOne(1000))
-    clickParentIfClickable(text("福利中心").findOne())
-    log("等待福利中心加载")
-    //text("限时彩蛋").waitFor()
-    text("看视频得奖励").waitFor()
-    var thread1 = threads.start(function () {
-        let stop = textContains("领奖上限").findOne()
-        console.log(stop.text());
-        engines.stopAllAndToast();
-    });
-    var thread2 = threads.start(function () {
-        let stop = textContains("风险等级").findOne()
-        console.log(stop.text());
-        engines.stopAllAndToast();
-    });
-
-    /*while (clickParentIfClickable(text("看视频开宝箱").findOnce()) != null) {
-        waitad()
-        clickParentIfClickable(text("我知道了").findOne(500))
-    }*/
-
-    /*while (clickParentIfClickable(text("看视频领福利").findOnce()) != null && !(text("明日再来吧").exists())) {
-        waitad()
-        clickParentIfClickable(text("我知道了").findOne(500))
-    }*/
-    while (clickParentIfClickable(text("看视频").findOnce()) != null) {
-        waitad()
-        clickParentIfClickable(text("我知道了").findOne(500))
-    }
-    log('视频已看完')
-    bounds = className("android.widget.FrameLayout").depth(0).findOne()
-    centerX = getXy(bounds).centerX;
-    centerY = getXy(bounds).centerY;
-    swipe(centerX, centerY, centerX, 0, 1000)
-    log("听书")
-    listenToBook()
-    log("玩游戏")
-    play()
-    log("领取奖励")
-    getPrize()
-    //停止线程执行
-    thread1.interrupt();
-    thread2.interrupt();
-    // log("碎片兑换")
-    // buy()
-    backHome()
-
-}
-
-//等待广告
-function waitad() {
-
-    log('看广告')
-    // 广告时间对象
-    var reward
-    //等待广告出现
-    while (className("android.view.View").depth(4).exists()) {
-        sleep(500)
-    }
-//等待广告时间对象
-    reward = textEndsWith("可获得奖励").findOne(7000)
-    if (reward == null) {
-        if (className("android.view.View").depth(4).exists()) {
-            while (className("android.view.View").depth(4).exists()) {
-                sleep(500)
-            }
-            if (!textEndsWith("可获得奖励").exists()) {
-                back()
-                sleep(500)
-                console.log('广告未加载1');
-                return
-            }
-        } else if (className("android.view.View").depth(5).exists()) {
-            back()
-            sleep(500)
-            console.log('广告未加载2');
-            return
         }
-        // else if (className("android.widget.TextView").findOne(1000) || className("android.widget.ProgressBar").findOne(1000) || className("android.view.ViewGroup").depth(14).findOne(1000) || className("android.view.View").depth(16).findOne(1000) || ocr.recognizeText(captureScreen()).text.match(/观看.*可获得/)) {
-        //     do {
-        //         sleep(1000)
-        //     } while (className("android.widget.TextView").findOne(1000) || className("android.widget.ProgressBar").findOne(1000) || className("android.view.ViewGroup").depth(14).findOne(1000) || className("android.view.View").depth(16).findOne(1000))
-        //     waitad2()
-        //     return;
-        // }
-        else {
-            console.log('未进入广告页面');
-            return
-        }
-    }
-    //等待广告出现
-    while (className("android.view.View").depth(4).exists()) {
-        sleep(500)
-    }
-    if (!textEndsWith("可获得奖励").exists()) {
-        back()
-        sleep(500)
-        console.log('广告未加载3');
-        return
-    }
-    //获取关闭坐标
-    var gb = text("关闭").findOne(400)
-    var cross = text("cross").findOne(400)
-    var tg = text("跳过广告").findOne(400)
-    // var wz = text("此图片未加标签。打开右上角的“更多选项”菜单即可获取图片说明。").findOnce()
-    var zb = null
-    if (gb) {
-        zb = gb
-    } else if (cross) {
-        zb = cross
-    } else if (tg) {
-        zb = tg
-    } /*else if (wz) {
-        zb = wz
-    }*/
-    if (zb == null) {
-        console.log('获取关闭坐标')
-        var video_quit = reward.bounds()
-        var x1 = 0;
-        var x2 = video_quit.left;
-        var y1 = video_quit.top;
-        var y2 = video_quit.bottom;
-        X = parseInt((x1 + x2) / 2)
-        Y = parseInt((y1 + y2) / 2)
-        // var nocross = true
-    }
-    // 获取等待时间
-    let textObj = textEndsWith("可获得奖励").findOne()
-    var time = jstime(textObj)
-    if (textObj.text().includes("有声书")) {
-        if (zb == null) {
-            click(X, Y)
+
+        let meTab = text("我").boundsInside(0, device.height * 0.8, device.width, device.height).findOnce();
+        if (meTab) {
+            updateLog("点击底部【我】Tab");
+            clickParentIfClickable(meTab);
         } else {
-            clickParentIfClickable(zb)
+            updateLog("等待主页加载...");
         }
-        sleep(500)
-        clickParentIfClickable(textStartsWith("继续").findOne())
+
+        sleep(1500);
     }
-    if (time == null) {
-        log('获取不到时间，重新获取')
-        log('点击退出')
-        do {
-            if (!textEndsWith("可获得奖励").exists()) {
-                back()
-                sleep(500)
-                console.log('获取不到坐标')
-                return
+
+    if (!atMePage) {
+        updateLog("无法确认进入【我】页面，尝试直接寻找福利中心...");
+    }
+
+    let entryClicked = false;
+    for (let i = 0; i < 5; i++) {
+        cleanPopups(); 
+
+        let fcEntry = text("福利中心").findOnce();
+        if (fcEntry) {
+            updateLog("点击进入福利中心...");
+            clickParentIfClickable(fcEntry);
+            entryClicked = true;
+            break;
+        }
+        sleep(1000);
+    }
+
+    if (entryClicked) {
+        let isLoaded = false;
+        for (let i = 0; i < 12; i++) {
+            if (currentActivity().indexOf("QDBrowserActivity") > -1) {
+                if (classNameContains("WebView").exists() || textMatches(/规则|去完成/).exists()) {
+                    updateLog("福利中心加载成功");
+                    sleep(2500); 
+                    isLoaded = true;
+                    break;
+                }
             }
-            if (zb == null) {
-                click(X, Y)
-            } else {
-                clickParentIfClickable(zb)
+            sleep(1000);
+        }
+        return isLoaded;
+    }
+    return false;
+}
+
+// --- 4. 游戏任务处理逻辑 ---
+
+function game_look(btn, taskInfo) {
+    let min = 0;
+    let match = taskInfo.match(/再玩(\d+)分钟/);
+    if (match) {
+        min = parseInt(match[1]);
+        updateLog("识别到任务需要挂机: " + min + " 分钟");
+    } else {
+        updateLog("未能识别分钟数，跳过挂机逻辑，按普通视频任务处理");
+        return;
+    }
+
+    let totalMin = min + 1;
+
+    if (!clickParentIfClickable(btn)) click(btn.bounds().centerX(), btn.bounds().centerY());
+    sleep(4000);
+
+    updateLog("正在寻找进入点...");
+    let rankBtn = text("排行").findOne(5000);
+    if (rankBtn) {
+        click(rankBtn.bounds().centerX(), rankBtn.bounds().centerY());
+        sleep(2500);
+        text("在线玩").findOne().click(); 
+    } else {
+        swipe(device.width / 2, device.height * 0.7, device.width / 2, device.height * 0.3, 800);
+        text("在线玩").findOne().click();
+    }
+    sleep(5000); 
+
+    device.wakeUp();
+    device.keepScreenOn(totalMin * 60 * 1000 + 10000);
+
+    for (let i = totalMin; i > 0; i--) {
+        updateLog("游戏挂机中，剩余 " + i + " 分钟...");
+        swipe(device.width / 2, device.height / 2, device.width / 2 + 30, device.height / 2 + 30, 300);
+        sleep(60000); 
+
+        if (textMatches(/福利中心|激励任务/).exists()) {
+            updateLog("检测到已不在游戏页面，提前结束计时");
+            break;
+        }
+    }
+
+    device.cancelKeepingAwake();
+    updateLog("挂机时间到，正在返回福利中心...");
+    let backCount = 0;
+    while (!textMatches(/福利中心|激励任务|去完成|已领取/).exists() && backCount < 6) {
+        back(); sleep(2000); backCount++;
+    }
+}
+
+// --- 5. 视频处理逻辑 ---
+
+function video_look(btn, taskInfo) {
+    updateLog("点击广告任务，进入监测...");
+    clickParentIfClickable(btn);
+
+    let vCount = 0;
+    while (vCount < 15) {
+        if (textMatches(/.*验证.*|.*依次点击.*/).exists() || textContains("安全验证").exists()) {
+            device.vibrate(500);
+            updateLog("发现验证码，请手动处理...");
+            while (textMatches(/.*验证.*|.*依次点击.*|确认|确定/).exists()) { sleep(2000); }
+            updateLog("验证完毕"); sleep(2000);
+        }
+        if (!text("激励任务").exists()) break;
+        sleep(1000); vCount++;
+    }
+
+    let adFinished = false;
+    let jumpRegex = new RegExp(jumpKeywords.join("|"));
+
+    while (!adFinished) {
+        updateLog("--- 进入动态核验模式 ---");
+        let igniteMode = "";
+        let isConfirmedSilent = false;
+        let lastDetectedSec = -1;
+
+        let startTime = Date.now();
+        let targetEndTime = startTime + 22000;
+
+        while (Date.now() < targetEndTime) {
+            if (textMatches(/恭喜|已获得|重新播放|领奖成功|知道了/).exists()) {
+                updateLog("检测到奖励达标标识，提前结束。");
+                adFinished = true; break;
             }
-            sleep(500)
-        } while (!textStartsWith("继续").exists())
-        time = jstime(textEndsWith("可获得奖励").findOne())
-        clickParentIfClickable(textStartsWith("继续").findOne())
-        /*
-                if (time == null) {
-                    time = textMatches(/\d+/).findOnce()
-                    if (time) {
-                        time = parseInt(time.text())
+            
+            let cap = getFreshCapture();
+            if (cap) {
+                updateLog("截屏中---");
+                let res = paddle.ocr(cap);
+                cap.recycle();
+
+                let headerStr = "";
+                let fullStr = "";
+                let currentSec = -1;
+                let ocrBtnObj = null;
+                
+                for (let r of res) {
+                    if (r.bounds.top < device.height * 0.15) {
+                        headerStr += r.text;
+                    }
+                    fullStr += r.text;
+                    let s = jstime(r.text);
+                    if (s !== null) currentSec = s;
+
+                    if (strHasArr(r.text, jumpKeywords) && r.text.length <= 10) {
+                        ocrBtnObj = r;
                     }
                 }
-        */
-    }
 
-//等待广告结束
-    var num
-    if (time) {
-        log('等待' + (time + 1) + '秒')
-        sleep(1000 * (time + 1))
-        num = 0
-        do {
-            if (zb == null) {
-                click(X, Y)
-            } else {
-                clickParentIfClickable(zb)
-            }
-            if (clickParentIfClickable(textStartsWith("继续").findOne(500))) {
-                sleep(1000)
-                num++
-                log('等待' + num + '秒')
-            }
-        } while (textEndsWith("可获得奖励").exists());
-    } else {
-//获取不到时间
-        log('等待视频结束')
-        // clickParentIfClickable(text("继续观看").findOne())
-        num = 0
-        do {
-            num++
-            sleep(1000)
-            log('等待' + num + '秒')
-        } while (textEndsWith("可获得奖励").exists());
-    }
-//判断是否还在广告页面
-    if (className("android.view.View").depth(5).exists()) {
-        back()
-        sleep(500)
-    }
-    log('广告结束')
-    sp++
-    clickParentIfClickable(text("知道了").findOne(1500))
-    log('已看视频' + sp + '个')
-    sleep(1000)
-}
-
-//等待广告
-/*
-function waitad2() {
-
-    console.log('获取关闭坐标')
-    // var templ = images.read('https://tutu.to/image/hBWyI');
-    var templ = images.read('https://www.helloimg.com/i/2025/01/10/6781031fc8fbc.png');
-    var p = findImage(captureScreen(), templ);
-    X = p.x
-    Y = p.y
-    do {
-        // 获取等待时间
-        time = ocr.recognizeText(captureScreen()).text.match(/观看.*可获得/).match(/\d+/g)
-        //等待广告结束
-        log('等待' + (time + 1) + '秒')
-        sleep(1000 * (time + 1))
-    } while (ocr.recognizeText(captureScreen()).text.match(/恭喜获得/) == null);
-    click(X, Y)
-    log('广告结束')
-    sp++
-    log('已看视频' + sp + '个')
-}
-*/
-function waitad2() {
-    console.log('获取关闭');
-    // 图片URL地址
-    var templUrl = 'https://www.helloimg.com/i/2025/01/10/6781031fc8fbc.png';
-    // 下载图片到本地
-    var downloadPath = '/sdcard/templ.png'; // 指定下载路径
-    http.get(templUrl, function (error, response) {
-        console.log(1)
-        if (!error && response.statusCode == 200) {
-            // 将图片内容保存到本地文件
-            files.writeBytes(downloadPath, response.body.bytes());
-            // 从本地加载图片
-            var templ = images.read(downloadPath);
-            console.log(2)
-            if (templ) {
-                var p = findImage(captureScreen(), templ);
-                if (p) {
-                    var X = p.x;
-                    var Y = p.y;
-                    do {
-                        // 获取等待时间
-                        var screenText = ocr.recognizeText(captureScreen()).text;
-                        var timeMatch = screenText.match(/观看.*可获得/);
-                        if (timeMatch) {
-                            var time = timeMatch[0].match(/\d+/g);
-                            if (time) {
-                                time = parseInt(time[0], 10);
-                                // 等待广告结束
-                                console.log('等待' + (time + 1) + '秒');
-                                sleep(1000 * (time + 1));
-                            }
+                let isIgniteAd = false;
+                if (headerStr.indexOf("点击") > -1 && igniteMode == "") {
+                    if (/观看|还剩/.test(fullStr) || fullStr.match(/看\d+秒/)) {
+                        if (headerStr.indexOf("点击后") > -1 || headerStr.indexOf("点击浏览") > -1) {
+                            isIgniteAd = true;
                         }
-                    } while (!screenText.match(/恭喜获得/));
-                    click(X, Y);
-                    console.log('广告结束');
-                    sp++;
-                    console.log('已看视频' + sp + '个');
-                } else {
-                    console.log('未找到关闭广告的坐标');
+                    } else {
+                        isIgniteAd = true;
+                    }
+                }
+
+                // --- MODIFIED: 移除嵌套 1.2s 重试，依靠外层 while 循环自然轮询 ---
+                if (isIgniteAd) {
+                    let waitSec = jstime(headerStr) || 15;
+                    let randomExtra = (Math.random() * 1 + 1).toFixed(1);
+                    let finalWait = (parseFloat(waitSec) + parseFloat(randomExtra)).toFixed(1);
+
+                    updateLog("核验：【点火类】，避免静默广告误判，等待 " + finalWait + " 秒后归位...");
+                    igniteMode = performIgniteAction(ocrBtnObj);
+
+                    if (igniteMode != "") {
+                        sleep(finalWait * 1000);
+                        break; 
+                    }
+                }
+
+                if (currentSec > 0 && igniteMode == "") {
+                    if (lastDetectedSec != -1 && currentSec < lastDetectedSec) {
+                        if (!isConfirmedSilent) updateLog("监测：【静默广告】倒计时中... (当前: " + currentSec + "s)");
+                        isConfirmedSilent = true;
+                    }
+                    lastDetectedSec = currentSec;
+                    targetEndTime = Date.now() + (currentSec + 2) * 1000;
+                }
+            }
+            sleep(2000);
+        }
+
+        updateLog("计时结束，正在收尾...");
+
+        let sysPkgs = ["miui.systemui.plugin", "com.miui.securitycore", "com.android.systemui", "android", "com.android.packageinstaller", "com.android.settings", "com.miui.securitycenter", "com.huawei.android.packageinstaller"];
+
+        if (igniteMode == "internal_browser" && currentPackage() == qidianPackageName) {
+            updateLog("当前处于内部浏览器，执行 Back 返回原广告页...");
+            back(); sleep(2000);
+        }
+
+        let cancelBtn = textMatches(/取消|拒绝|放弃|留在.*/).findOnce();
+        if (cancelBtn || sysPkgs.indexOf(currentPackage()) > -1) {
+            if (cancelBtn) {
+                updateLog("发现系统拦截框，点击 [" + cancelBtn.text() + "] 归位...");
+                click(cancelBtn.bounds().centerX(), cancelBtn.bounds().centerY());
+                let waitPkg = 0;
+                while (sysPkgs.indexOf(currentPackage()) > -1 && waitPkg < 6) { sleep(500); waitPkg++; }
+                if (currentPackage() == qidianPackageName && (classNameContains("WebView").exists() || className("android.widget.ProgressBar").exists())) {
+                    updateLog("判定处于内部浏览器落地页，执行 Back 返回广告页...");
+                    back(); sleep(1500);
                 }
             } else {
-                console.error('模板图片加载失败，请检查下载路径是否正确：' + downloadPath);
+                updateLog("处于系统环境，执行返回...");
+                back(); sleep(1500);
             }
-        } else {
-            console.error('下载图片失败，错误信息：', error);
-        }
-    });
-}
-
-//兑换
-function buy() {
-    clickParentIfClickable(desc('更多好礼').findOne())
-    text('畅享卡').waitFor()
-    var enjoyCard = textStartsWith('7天').findOne().parent().parent()
-    var convertibleList = enjoyCard.find(text('兑换'))
-    if (convertibleList.length > 0) {
-        for (let i = convertibleList.length - 1; i >= 0; i--) {
-            clickParentIfClickable(convertibleList[i])
-            clickParentIfClickable(text("确认").findOne(2000))
-            sleep(500)
         }
 
-    }
-    console.log('已兑换')
-
-}
-
-//听书
-function listenToBook() {
-    var bookV
-    // let listenTime
-    bookV = textContains("当日听书").findOne(1000)
-    if (bookV == null) {
-        console.log('没有听书')
-        return
-    }
-    // let listeningTime = jstime(bookV);
-    // if (textContains("当日玩游戏").findOnce() == null) {
-    //      listenTime = jstime(bookVs);
-    // }
-    bookV = bookV.parent()
-    if (clickParentIfClickable(bookV.findOne(text('去完成'))) != null) {
-        sleep(1500)
-        let isback = false
-        if (text("听原创小说").exists()) {
-            isback = true
-            text("听原创小说").waitFor()
-            clickParentIfClickable(id("playIv").findOne())
-        }
-        id("ivPlayCenter").waitFor()
-//         sleep(1000 * 10)
-        back()
-        clickParentIfClickable(id("btnLeft").findOne(850))
-        if (isback) {
-            back()
-        }
-    }
-}
-
-//玩游戏
-/*
-function play() {
-    var game
-    game = textContains("当日玩游戏").findOne(1000)
-    if (game == null) {
-        console.log('没有游戏可玩')
-        return
-    }
-    game = game.parent()
-    let finishing
-    var pt
-    device.keepScreenDim();
-    while ((finishing = game.findOne(text('去完成'))) != null) {
-        pt = jstime(game.findOne(textMatches(/\/\d+分钟/))) - jstime(game.findOne(textMatches(/\d+/)))
-        // var repetitions = 4
-        do {
-
-            if (!clickParentIfClickable(finishing)) {
-                back()
-                clickParentIfClickable(text("游戏中心").findOne())
+        let finalPkg = currentPackage();
+        if (finalPkg != qidianPackageName && finalPkg.indexOf("autojs") == -1 && sysPkgs.indexOf(finalPkg) == -1) {
+            updateLog("确认处于真正的外部 App [" + finalPkg + "]，执行快速归位...");
+            let backRetry = 0;
+            while (currentPackage() != qidianPackageName && backRetry < 5) {
+                updateLog("返回中...");
+                back(); sleep(500); backRetry++;
             }
-            sleep(500)
-        } while (textContains("当日玩游戏").exists());
-        log("前往游戏中心")
-        textContains("热门").waitFor()
-        // textContains("喜欢").waitFor()
-        textContains("推荐").waitFor()
-        if (clickParentIfClickable(text("排行").findOne(5000)) == null) {
-            clickParentIfClickable(text("在线玩").findOne())
+            if (currentPackage() != qidianPackageName && currentPackage().indexOf("autojs") == -1 && sysPkgs.indexOf(currentPackage()) == -1) {
+                updateLog("环境依然异常，强行调起起点...");
+                app.launchPackage(qidianPackageName);
+                sleep(2500);
+            }
+        }
+
+        if (currentPackage() == qidianPackageName || sysPkgs.indexOf(currentPackage()) > -1) {
+            let rewardOk = text("知道了").findOne(500);
+            if (rewardOk) {
+                updateLog("检测到奖励到账，点击 [知道了]...");
+                click(rewardOk.bounds().centerX(), rewardOk.bounds().centerY());
+                sleep(1500);
+                adFinished = true;
+            } else {
+                let xBtn = findCloseBtn();
+                if (xBtn) {
+                    let b = xBtn.bounds();
+                    let rx = b.centerX() + Math.round((Math.random() - 0.5) * (b.width() * 0.4));
+                    let ry = b.centerY() + Math.round((Math.random() - 0.5) * (b.height() * 0.4));
+                    let rt = 100 + Math.floor(Math.random() * 60);
+                    updateLog("正在模拟真人点击组件: (" + rx + ", " + ry + ")，时长: " + rt + "ms");
+                    press(rx, ry, rt);
+                    sleep(500);
+                    if (!textMatches(/激励任务|领奖励|去完成|领积分/).exists()) {
+                        updateLog("组件点击未生效，触发盲扫兜底...");
+                        closeAdByScan();
+                    }
+                    adFinished = true;
+                } else {
+                    if (textMatches(/激励任务|领奖励|领积分|去完成/).exists()) {
+                        adFinished = true;
+                    } else {
+                        closeAdByScan();
+                    }
+                }
+            }
+        }
+
+        let rescueBtn = text("知道了").findOnce() || text("点击去浏览").findOnce() || text("继续看视频").findOnce();
+        if (rescueBtn) {
+            updateLog("拦截弹窗，执行点击: " + rescueBtn.text());
+            click(rescueBtn.bounds().centerX(), rescueBtn.bounds().centerY());
+            sleep(2000);
+            if (rescueBtn.text() == "知道了") adFinished = true;
         } else {
-            text("新游榜").waitFor()
-            text("热门榜").waitFor()
-            text("畅销榜").waitFor()
-            clickParentIfClickable(text("热门榜").findOne())
-            clickParentIfClickable(text("在线玩").findOne())
-            // repetitions++
+            if (textMatches(/激励任务|去完成|领奖励/).exists()) {
+                adFinished = true;
+            } else {
+                back(); sleep(1000);
+                if (textMatches(/激励任务|去完成/).exists()) adFinished = true;
+            }
         }
-        log("进入游戏")
-        log('剩余' + (pt + 0.5) + '分钟')
-        startCountdown(pt + 0.5)
-        backHome()
-        log("重新进入福利中心")
-        clickParentIfClickable(text("我").findOne())
-        // waitForActivity('com.qidian.QDReader.ui.activity.MainGroupActivity')
-        // clickParentIfClickable(text("我知道了").findOne(750))
-        clickParentIfClickable(text("福利中心").findOne())
-        log("等待福利中心加载")
-        // text("限时彩蛋").waitFor()
-        text("看视频得奖励").waitFor()
-        game = textContains("当日玩游戏").findOne(1000)
-        game = game.parent()
     }
-    device.cancelKeepingAwake();
-}
-*/
-function play() {
-    var game
-    game = textContains("当日玩游戏").findOne(1000)
-    if (game == null) {
-        console.log('没有游戏可玩')
-        return
-    }
-    game = game.parent()
-    let finishing
-    var pt
-    device.keepScreenDim();
-    while ((finishing = game.findOne(textMatches(/ 再玩\d+分钟可获得 /))) != null) {
-        pt = jstime(finishing)
-        if (pt == null) {
-            break
-        }
-        // log(pt)
-        // var repetitions = 4
-        do {
 
-            // if (!clickParentIfClickable(text('去完成').findOne(1500))) {
-            //     back()
-            //     clickParentIfClickable(text("游戏中心").findOne())
-            // }
-            // clickParentIfClickable(text('去完成').findOne(1500))
-            className("android.widget.TextView").text("去完成").clickable(true).depth(16).findOne().click()
-            sleep(1000)
-        } while (textContains("当日玩游戏").exists());
-        /*log("前往游戏中心")
-        textContains("热门").waitFor()
-        // textContains("喜欢").waitFor()
-        textContains("推荐").waitFor()
-        if (clickParentIfClickable(text("排行").findOne(5000)) == null) {
-            clickParentIfClickable(text("在线玩").findOne())
+    function performIgniteAction(preOcrBtn) {
+        let mode = "";
+        let uiBtn = textMatches(jumpRegex).findOnce();
+        if (uiBtn && uiBtn.bounds().width() > 50) {
+            updateLog(">> 命中路径：【UI 系统控件】");
+            click(uiBtn.bounds().centerX(), uiBtn.bounds().centerY());
+        }
+        else if (preOcrBtn) {
+            updateLog(">> 命中路径：【OCR 图像识别】");
+            click(preOcrBtn.bounds.centerX(), preOcrBtn.bounds.centerY());
+        }
+        else {
+            updateLog(">> 命中路径：【坐标兜底模式】");
+            click(device.width / 2, device.height * 0.88);
+        }
+        sleep(2500); 
+
+        let checkStart = Date.now();
+        while (Date.now() - checkStart < 6000) {
+            let pkg = currentPackage();
+            if (pkg == qidianPackageName && classNameContains("WebView").exists()) {
+                mode = "internal_browser"; break;
+            }
+            if (textMatches(/取消|选择.*应用$/).exists()) {
+                mode = "system"; break;
+            }
+            if (pkg != qidianPackageName && pkg.indexOf("autojs") == -1) {
+                mode = "external"; break;
+            }
+            sleep(1000);
+        }
+        return mode;
+    }
+}
+
+// --- 6. 主循环 ---
+
+function main() {
+    auto.waitFor();
+    // 保持屏幕常亮，防止截图获取到旧的缓存画面
+    device.keepScreenOn(3600 * 1000); // 保持1小时，脚本结束后会自动取消
+    updateLog("已设置屏幕常亮，防止OCR获取缓存。");
+
+    if (!requestScreenCapture()) return;
+
+    launchAndGo();
+
+    updateLog("正在核验今日核心进度...");
+
+    let scrollRetry = 0;
+    while (scrollRetry < 2) {
+        let adTaskDone = false;
+        let gameTaskDone = false;
+
+        let allTexts = className("android.widget.TextView").find();
+        let allBtns = textMatches(/去完成|领奖励|领章节|看视频|领积分/).find();
+        let foundAction = false;
+
+        for (let i = 0; i < allBtns.length; i++) {
+            let btn = allBtns[i];
+            if (btn.bounds().top < 150 || btn.bounds().bottom > device.height - 100) continue;
+
+            let ty = btn.bounds().centerY();
+            let rowText = "";
+            for (let j = 0; j < allTexts.length; j++) {
+                if (Math.abs(allTexts[j].bounds().centerY() - ty) < 90) rowText += allTexts[j].text() + "|";
+            }
+
+            if (rowText.indexOf("已领取") > -1 || rowText.indexOf("充值") > -1) continue;
+
+            if (strHasArr(rowText, whiteList)) {
+                if (strHasArr(btn.text(), claimKeywords)) {
+                    updateLog("检测到奖励可领...");
+                    clickParentIfClickable(btn); sleep(2000);
+                    let ik = text("知道了").findOnce(); if (ik) ik.click();
+                    foundAction = true; break;
+                }
+
+                let isGame = rowText.indexOf("再玩") > -1;
+                if (isGame) {
+                    if (taskMode == "video") continue;
+                    game_look(btn, rowText);
+                    foundAction = true;
+                    scrollRetry = 0;
+                    break;
+                } else {
+                    if (taskMode == "game") continue;
+                    if (!adTaskDone) {
+                        video_look(btn, rowText);
+                        foundAction = true;
+                        scrollRetry = 0;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (!foundAction) {
+            updateLog("下滑搜寻任务...");
+            swipe(device.width / 2, device.height * 0.7, device.width / 2, device.height * 0.3, 800);
+            sleep(2500); scrollRetry++;
         } else {
-            text("新游榜").waitFor()
-            text("热门榜").waitFor()
-            text("畅销榜").waitFor()
-            clickParentIfClickable(text("热门榜").findOne())
-            clickParentIfClickable(text("在线玩").findOne())
-            // repetitions++
-        }*/
-        log("进入游戏")
-        log('剩余' + (pt + 0.5) + '分钟')
-        startCountdown(pt + 0.5)
-        backHome()
-        log("重新进入福利中心")
-        clickParentIfClickable(text("我").findOne())
-        // waitForActivity('com.qidian.QDReader.ui.activity.MainGroupActivity')
-        // clickParentIfClickable(text("我知道了").findOne(750))
-        clickParentIfClickable(text("福利中心").findOne())
-        log("等待福利中心加载")
-        // text("限时彩蛋").waitFor()
-        text("看视频得奖励").waitFor()
-        bounds = className("android.widget.FrameLayout").depth(0).findOne()
-        centerX = getXy(bounds).centerX;
-        centerY = getXy(bounds).centerY;
-        swipe(centerX, centerY, centerX, 0, 1000)
-        game = textContains("当日玩游戏").findOne(1000)
-        game = game.parent()
-    }
-    device.cancelKeepingAwake();
-}
-
-//领取
-function getPrize() {
-    var prizePool
-    prizePool = text("领奖励").find()
-    for (i = 0; i < prizePool.length; i++) {
-        // prizePool[i].click()
-        clickParentIfClickable(prizePool[i])
-        clickParentIfClickable(text("我知道了").findOne(750))
-    }
-    clickParentIfClickable(id("ivClose").findOne(500))
-}
-
-//倒计时
-function startCountdown(minutes) {
-    var count = minutes * 60; // 倒计时的秒数
-    var remainingMinutes
-    var remainingSeconds
-    for (var i = count; i >= 0; i--) {
-        remainingMinutes = Math.floor(i / 60); // 剩余分钟数
-        remainingSeconds = i % 60; // 剩余秒数
-        //清除控制台
-        console.clear()
-        // 每分钟提示倒计时
-        if (i > 60) {
-            log("倒计时还剩 " + remainingMinutes + " 分钟 " + remainingSeconds + " 秒 ");
+            swipe(device.width / 2, device.height * 0.3, device.width / 2, device.height * 0.8, 500);
+            sleep(2000);
         }
-        // 剩余60秒钟提示倒计时
-        if (i <= 60) {
-            log("倒计时还剩 " + i + " 秒");
-        }
-        sleep(1000); // 等待1秒
-        device.wakeUpIfNeeded();
     }
-    console.clear()
-    log("倒计时已结束");
+    updateLog("所有核心白名单任务已完成，脚本正常退出。");
 }
-
-
-start()
-//投推荐票
-poll()
-//签到
-if (ham.checkbox_01) {
-    qdao()
-}
-//领碎片
-if (ham.checkbox_02) {
-    looksp()
-}
-//做福利任务
-if (ham.checkbox_03) {
-    lookvd()
-}
-/*//停止线程执行
-thread.interrupt();*/
-console.hide()
-engines.stopAllAndToast()
